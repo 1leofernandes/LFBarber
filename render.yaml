@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: barbearia-backend
+    runtime: node
+    runtimeVersion: "20.11.1"
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+  - type: cron
+    name: smart-wakeup
+    schedule: "*/20 8-22 * * 1-6" # Seg-Sáb, horário comercial
+    startCommand: "node smart-wake.js"

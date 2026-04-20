@@ -1,0 +1,579 @@
+// Model de Agendamento com queries otimizadas
+const pool = require('../config/database');
+
+class Appointment {
+  //MÉTODO findAll ATUALIZADO
+  static async findAll(filters = {}, limit = 100, offset = 0) {
+      let query = `
+        SELECT 
+          a.id,
+          a.usuario_id,
+          a.barbeiro_id,
+          a.servico_id,
+          a.data_agendada,
+          a.hora_inicio,
+          a.hora_fim,
+          a.status,
+          a.created_at,
+          a.updated_at,
+          a.observacoes,
+          c.nome AS cliente_nome,
+          c.email AS cliente_email,
+          b.nome AS barbeiro_nome,
+          COALESCE(
+            json_agg(
+              DISTINCT jsonb_build_object(
+                'id', s.id,
+                'nome_servico', s.nome_servico,
+                'valor_servico', s.valor_servico,
+                'duracao_servico', s.duracao_servico
+              )
+            ) FILTER (WHERE s.id IS NOT NULL),
+            '[]'::json
+          ) as servicos,
+          COALESCE((
+            SELECT COALESCE(SUM(
+              CASE
+                WHEN u2.assinante = true
+                  AND u2.assinatura_id IS NOT NULL
+                  AND EXISTS (
+                    SELECT 1 FROM assinatura_servico ass WHERE ass.assinatura_id = u2.assinatura_id AND ass.servico_id = s2.id
+                  )
+                  AND EXISTS (
+                    SELECT 1 FROM assinatura_dias_semana ads WHERE ads.assinatura_id = u2.assinatura_id AND ads.dia_semana = EXTRACT(ISODOW FROM a.data_agendada)::integer
+                  )
+                THEN 0
+                ELSE COALESCE(s2.valor_servico,0)
+              END
+            ),0)
+            FROM (
+              SELECT servico_id FROM agendamento_servicos WHERE agendamento_id = a.id
+              UNION ALL
+              SELECT a.servico_id WHERE a.servico_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agendamento_servicos ags3 WHERE ags3.agendamento_id = a.id)
+            ) rel
+            LEFT JOIN servicos s2 ON rel.servico_id = s2.id
+            LEFT JOIN usuarios u2 ON u2.id = a.usuario_id
+          ), 0) as valor_total
+        FROM agendamentos a
+        INNER JOIN usuarios c ON a.usuario_id = c.id
+        INNER JOIN usuarios b ON a.barbeiro_id = b.id
+        LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+        LEFT JOIN servicos s ON ags.servico_id = s.id
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 0;
+
+      // Filtro por ID do barbeiro
+      if (filters.barbeiro_id) {
+        paramCount++;
+        query += ` AND a.barbeiro_id = $${paramCount}`;
+        params.push(filters.barbeiro_id);
+      }
+
+      // Filtro por data (vem como "data" do frontend)
+      if (filters.data) {
+        paramCount++;
+        query += ` AND a.data_agendada = $${paramCount}`;
+        params.push(filters.data);
+      }
+
+      // Filtro por status
+      if (filters.status) {
+        paramCount++;
+        query += ` AND a.status = $${paramCount}`;
+        params.push(filters.status);
+      }
+
+      // Filtro por nome do cliente (busca parcial case-insensitive)
+      if (filters.cliente) {
+        paramCount++;
+        query += ` AND c.nome ILIKE $${paramCount}`;
+        params.push(`%${filters.cliente}%`);
+      }
+
+      // Filtro por ID do cliente
+      if (filters.usuario_id) {
+        paramCount++;
+        query += ` AND a.usuario_id = $${paramCount}`;
+        params.push(filters.usuario_id);
+      }
+
+      // Filtro por período de datas (data_inicio e data_fim)
+      if (filters.data_inicio) {
+        paramCount++;
+        query += ` AND a.data_agendada >= $${paramCount}`;
+        params.push(filters.data_inicio);
+      }
+
+      if (filters.data_fim) {
+        paramCount++;
+        query += ` AND a.data_agendada <= $${paramCount}`;
+        params.push(filters.data_fim);
+      }
+
+      // Agrupamento necessário por causa do json_agg
+      query += ` GROUP BY a.id, c.nome, c.email, b.nome `;
+      
+      // Ordenação
+      query += ` ORDER BY a.data_agendada DESC, a.hora_inicio DESC`;
+
+      // Paginação (após GROUP BY)
+      if (limit && limit > 0) {
+        paramCount++;
+        query += ` LIMIT $${paramCount}`;
+        params.push(limit);
+      }
+
+      if (offset && offset > 0) {
+        paramCount++;
+        query += ` OFFSET $${paramCount}`;
+        params.push(offset);
+      }
+
+      console.log('Query executada:', query);
+      console.log('Parâmetros:', params);
+
+      const result = await pool.query(query, params);
+      return result.rows;
+  }
+
+  // CORREÇÃO: Adicionar método findById que estava faltando
+  static async findById(id) {
+    const query = `
+      SELECT 
+        a.*,
+        c.nome AS cliente_nome,
+        b.nome AS barbeiro_nome,
+        s.nome_servico AS servico_nome
+      FROM agendamentos a
+      INNER JOIN usuarios c ON a.usuario_id = c.id
+      INNER JOIN usuarios b ON a.barbeiro_id = b.id
+      LEFT JOIN servicos s ON a.servico_id = s.id
+      WHERE a.id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+  }
+
+  // CORREÇÃO: Adicionar método update que estava faltando
+  static async update(id, data) {
+    const fields = [];
+    const values = [];
+    let paramCount = 0;
+
+    if (data.usuario_id !== undefined) {
+      paramCount++;
+      fields.push(`usuario_id = $${paramCount}`);
+      values.push(data.usuario_id);
+    }
+    if (data.barbeiro_id !== undefined) {
+      paramCount++;
+      fields.push(`barbeiro_id = $${paramCount}`);
+      values.push(data.barbeiro_id);
+    }
+    if (data.servico_id !== undefined) {
+      paramCount++;
+      fields.push(`servico_id = $${paramCount}`);
+      values.push(data.servico_id);
+    }
+    if (data.data_agendada !== undefined) {
+      paramCount++;
+      fields.push(`data_agendada = $${paramCount}`);
+      values.push(data.data_agendada);
+    }
+    if (data.hora_inicio !== undefined) {
+      paramCount++;
+      fields.push(`hora_inicio = $${paramCount}`);
+      values.push(data.hora_inicio);
+    }
+    if (data.hora_fim !== undefined) {
+      paramCount++;
+      fields.push(`hora_fim = $${paramCount}`);
+      values.push(data.hora_fim);
+    }
+    if (data.status !== undefined) {
+      paramCount++;
+      fields.push(`status = $${paramCount}`);
+      values.push(data.status);
+    }
+
+    if (fields.length === 0) {
+      throw new Error('Nenhum campo para atualizar');
+    }
+
+    paramCount++;
+    values.push(id);
+
+    const query = `
+      UPDATE agendamentos
+      SET ${fields.join(', ')}, updated_at = NOW()
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  }
+
+  // CORREÇÃO: Adicionar método delete que estava faltando
+  static async delete(id) {
+    const query = 'DELETE FROM agendamentos WHERE id = $1 RETURNING id';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+  }
+
+  // MÉTODO ORIGINAL (mantido para compatibilidade)
+  static async create(usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim) {
+    const query = `
+      INSERT INTO agendamentos (usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      RETURNING id, usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, created_at
+    `;
+    const result = await pool.query(query, [usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim]);
+    return result.rows[0];
+  }
+
+  // NOVO: createWithServices melhorado
+  static async createWithServices(usuario_id, barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim, observacoes = null) {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // 1. Criar o agendamento (com servico_id como NULL ou o primeiro)
+      const agendamentoQuery = `
+        INSERT INTO agendamentos 
+        (usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, observacoes, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        RETURNING *
+      `;
+      
+      const primeiroServico = servicos_ids[0] || null;
+      const agendamentoResult = await client.query(agendamentoQuery, [
+        usuario_id, barbeiro_id, primeiroServico, data_agendada, hora_inicio, hora_fim, observacoes
+      ]);
+      
+      const agendamento = agendamentoResult.rows[0];
+      
+      // 2. Inserir todos os serviços na tabela de relação
+      for (const servicoId of servicos_ids) {
+        await client.query(
+          'INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [agendamento.id, servicoId]
+        );
+      }
+
+      // 2.5 Vincular assinatura_usuario_id se o usuário possui assinatura ativa
+      if (usuario_id) {
+        const userRes = await client.query('SELECT assinante, assinatura_id FROM usuarios WHERE id = $1', [usuario_id]);
+        const user = userRes.rows[0];
+        if (user && user.assinante && user.assinatura_id) {
+          const assinaturaUsuarioRes = await client.query(
+            `SELECT id FROM assinaturas_usuarios
+             WHERE usuario_id = $1
+               AND plano_id = $2
+               AND status = 'ativa'
+               AND data_inicio <= $3
+               AND (data_fim IS NULL OR data_fim >= $3)
+             ORDER BY data_inicio DESC
+             LIMIT 1`,
+             [usuario_id, user.assinatura_id, data_agendada]
+          );
+          if (assinaturaUsuarioRes.rows[0]) {
+            await client.query(
+              'UPDATE agendamentos SET assinatura_usuario_id = $1 WHERE id = $2',
+              [assinaturaUsuarioRes.rows[0].id, agendamento.id]
+            );
+          }
+        }
+      }
+      
+      await client.query('COMMIT');
+      
+      // 3. Retornar o agendamento completo com serviços
+      return await this.findByIdWithServices(agendamento.id);
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // NOVO: findByIdWithServices com valor_total
+  static async findByIdWithServices(id) {
+      const query = `
+          SELECT 
+              a.*,
+              c.nome as cliente_nome,
+              b.nome as barbeiro_nome,
+              COALESCE(
+                  json_agg(
+                      DISTINCT jsonb_build_object(
+                          'id', s.id,
+                          'nome_servico', s.nome_servico,
+                          'valor_servico', s.valor_servico,
+                          'duracao_servico', s.duracao_servico,
+                          'descricao', s.descricao
+                      )
+                  ) FILTER (WHERE s.id IS NOT NULL),
+                  '[]'::json
+              ) as servicos,
+              COALESCE((
+                SELECT COALESCE(SUM(
+                  CASE
+                    WHEN u2.assinante = true
+                      AND u2.assinatura_id IS NOT NULL
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_servico ass WHERE ass.assinatura_id = u2.assinatura_id AND ass.servico_id = s2.id
+                      )
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_dias_semana ads WHERE ads.assinatura_id = u2.assinatura_id AND ads.dia_semana = EXTRACT(ISODOW FROM a.data_agendada)::integer
+                      )
+                    THEN 0
+                    ELSE COALESCE(s2.valor_servico,0)
+                  END
+                ),0)
+                FROM (
+                  SELECT servico_id FROM agendamento_servicos WHERE agendamento_id = a.id
+                  UNION ALL
+                  SELECT a.servico_id WHERE a.servico_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agendamento_servicos ags3 WHERE ags3.agendamento_id = a.id)
+                ) rel
+                LEFT JOIN servicos s2 ON rel.servico_id = s2.id
+                LEFT JOIN usuarios u2 ON u2.id = a.usuario_id
+              ), 0) as valor_total
+          FROM agendamentos a
+          LEFT JOIN usuarios c ON a.usuario_id = c.id
+          LEFT JOIN usuarios b ON a.barbeiro_id = b.id
+          LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+          LEFT JOIN servicos s ON ags.servico_id = s.id
+          WHERE a.id = $1
+          GROUP BY a.id, c.nome, b.nome
+      `;
+      
+      const result = await pool.query(query, [id]);
+      return result.rows[0];
+  }
+
+// NOVO: findByUserWithServices com valor_total
+  static async findByUserWithServices(usuario_id) {
+      const query = `
+          SELECT 
+              a.*,
+              c.nome as cliente_nome,
+              b.nome as barbeiro_nome,
+              COALESCE(
+                  json_agg(
+                      DISTINCT jsonb_build_object(
+                          'id', s.id,
+                          'nome_servico', s.nome_servico,
+                          'valor_servico', s.valor_servico,
+                          'duracao_servico', s.duracao_servico
+                      )
+                  ) FILTER (WHERE s.id IS NOT NULL),
+                  '[]'::json
+              ) as servicos,
+              COALESCE((
+                SELECT COALESCE(SUM(
+                  CASE
+                    WHEN u2.assinante = true
+                      AND u2.assinatura_id IS NOT NULL
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_servico ass WHERE ass.assinatura_id = u2.assinatura_id AND ass.servico_id = s2.id
+                      )
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_dias_semana ads WHERE ads.assinatura_id = u2.assinatura_id AND ads.dia_semana = EXTRACT(ISODOW FROM a.data_agendada)::integer
+                      )
+                    THEN 0
+                    ELSE COALESCE(s2.valor_servico,0)
+                  END
+                ),0)
+                FROM (
+                  SELECT servico_id FROM agendamento_servicos WHERE agendamento_id = a.id
+                  UNION ALL
+                  SELECT a.servico_id WHERE a.servico_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agendamento_servicos ags3 WHERE ags3.agendamento_id = a.id)
+                ) rel
+                LEFT JOIN servicos s2 ON rel.servico_id = s2.id
+                LEFT JOIN usuarios u2 ON u2.id = a.usuario_id
+              ), 0) as valor_total
+          FROM agendamentos a
+          LEFT JOIN usuarios c ON a.usuario_id = c.id
+          LEFT JOIN usuarios b ON a.barbeiro_id = b.id
+          LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+          LEFT JOIN servicos s ON ags.servico_id = s.id
+          WHERE a.usuario_id = $1
+          GROUP BY a.id, b.nome
+          ORDER BY a.data_agendada DESC, a.hora_inicio DESC
+      `;
+      
+      const result = await pool.query(query, [usuario_id]);
+      return result.rows;
+  }
+
+  // MÉTODOS EXISTENTES (corrigidos)
+  static async checkConflict(barbeiro_id, data_agendada, hora_inicio, hora_fim) {
+    const query = `
+      SELECT id
+      FROM agendamentos
+      WHERE barbeiro_id = $1
+      AND data_agendada = $2
+      AND hora_inicio = $3
+      AND status != 'cancelado'
+      LIMIT 1
+    `;
+    const result = await pool.query(query, [barbeiro_id, data_agendada, hora_inicio, hora_fim]);
+    return result.rows.length > 0;
+  }
+
+  static async getAppointmentsByBarber(barbeiro_id, startDate) {
+    const query = `
+      SELECT 
+        a.id,
+        a.data_agendada,
+        a.hora_inicio,
+        a.hora_fim,
+        c.nome AS nome_cliente,
+        b.nome AS nome_barbeiro,
+        s.nome_servico AS nome_servico,
+        a.status
+      FROM agendamentos a
+      INNER JOIN usuarios c ON a.usuario_id = c.id
+      INNER JOIN usuarios b ON a.barbeiro_id = b.id
+      INNER JOIN servicos s ON a.servico_id = s.id
+      WHERE a.barbeiro_id = $1
+      AND a.data_agendada >= $2
+      AND a.status != 'cancelado'
+      ORDER BY a.data_agendada ASC, a.hora_inicio ASC
+    `;
+    const result = await pool.query(query, [barbeiro_id, startDate]);
+    return result.rows;
+  }
+
+  static async getUnavailableHours(barbeiro_id, data_agendada) {
+    const query = `
+      (
+        SELECT hora_inicio as hora
+        FROM agendamentos
+        WHERE barbeiro_id = $1
+        AND data_agendada = $2
+        AND status != 'cancelado'
+      )
+      UNION
+      (
+        SELECT hora_inicio as hora
+        FROM bloqueios
+        WHERE id_barbeiro = $1
+        AND data = $2
+      )
+      ORDER BY hora ASC
+    `;
+    const result = await pool.query(query, [barbeiro_id, data_agendada]);
+    return result.rows.map(r => r.hora);
+  }
+
+  // NOVO: updateStatus
+  static async updateStatus(id, status) {
+    const query = `
+      UPDATE agendamentos
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `;
+    const result = await pool.query(query, [status, id]);
+    return result.rows[0];
+  }
+
+  // NOVO: updateWithServices para admin
+  static async updateWithServices(id, data) {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // 1. Atualizar dados básicos do agendamento
+      const fields = [];
+      const values = [];
+      let paramCount = 0;
+
+      if (data.barbeiro_id !== undefined) {
+        paramCount++;
+        fields.push(`barbeiro_id = $${paramCount}`);
+        values.push(data.barbeiro_id);
+      }
+      if (data.data_agendada !== undefined) {
+        paramCount++;
+        fields.push(`data_agendada = $${paramCount}`);
+        values.push(data.data_agendada);
+      }
+      if (data.hora_inicio !== undefined) {
+        paramCount++;
+        fields.push(`hora_inicio = $${paramCount}`);
+        values.push(data.hora_inicio);
+      }
+      if (data.hora_fim !== undefined) {
+        paramCount++;
+        fields.push(`hora_fim = $${paramCount}`);
+        values.push(data.hora_fim);
+      }
+      if (data.status !== undefined) {
+        paramCount++;
+        fields.push(`status = $${paramCount}`);
+        values.push(data.status);
+      }
+      if (data.observacoes !== undefined) {
+        paramCount++;
+        fields.push(`observacoes = $${paramCount}`);
+        values.push(data.observacoes);
+      }
+
+      if (fields.length > 0) {
+        paramCount++;
+        values.push(id);
+        const updateQuery = `
+          UPDATE agendamentos
+          SET ${fields.join(', ')}, updated_at = NOW()
+          WHERE id = $${paramCount}
+          RETURNING id
+        `;
+        await client.query(updateQuery, values);
+      }
+
+      // 2. Atualizar serviços se fornecido
+      if (data.servicos_ids && Array.isArray(data.servicos_ids)) {
+        // Remover relações antigas
+        await client.query(
+          'DELETE FROM agendamento_servicos WHERE agendamento_id = $1',
+          [id]
+        );
+        
+        // Inserir novas relações
+        for (const servicoId of data.servicos_ids) {
+          await client.query(
+            'INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES ($1, $2)',
+            [id, servicoId]
+          );
+        }
+        
+        // Atualizar servico_id principal (primeiro da lista)
+        await client.query(
+          'UPDATE agendamentos SET servico_id = $1 WHERE id = $2',
+          [data.servicos_ids[0] || null, id]
+        );
+      }
+
+      await client.query('COMMIT');
+      
+      return await this.findByIdWithServices(id);
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+}
+
+module.exports = Appointment;

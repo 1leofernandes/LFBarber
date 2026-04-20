@@ -1,0 +1,258 @@
+// import { MercadoPagoService } from './services/mercadoPagoService.js';
+
+require('dotenv').config();
+const express = require('express');
+const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const passport = require('passport');
+
+// Importar configuração do Passport
+require('./src/config/passport');
+
+// Importar rotas
+const authRoutes = require('./src/routes/auth');
+// const paymentRoutes = require('./src/routes/payments');
+const usuarioRoutes = require('./src/routes/usuarioRoutes');
+const barbeiroRoutes = require('./src/routes/barbeiros');
+const servicoRoutes = require('./src/routes/servicos');
+const agendamentoRoutes = require('./src/routes/agendamentos');
+const assinaturaRoutes = require('./src/routes/assinatura');
+const subscriptionRecurrentRoutes = require('./src/routes/subscriptionRecurrent');
+const webhookRoutes = require('./src/routes/webhooks');
+const adminRoutes = require('./src/routes/admin');
+
+// Importar middlewares
+const errorHandler = require('./src/middlewares/errorHandler');
+const logger = require('./src/utils/logger');
+const ChargeScheduler = require('./src/utils/chargeScheduler');
+// const adminMiddleware = require('./middlewares/adminMiddleware');
+// const { authenticateToken } = require('./middlewares/auth');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// ==================== SEGURANÇA E OTIMIZAÇÃO ====================
+
+app.set('trust proxy', 1);
+
+
+// Helmet: Headers de segurança
+app.use(helmet());
+
+// Compression: Comprime respostas (gzip)
+app.use(compression());
+
+// Rate Limiting: Protege contra DoS
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || '900000'), // 15 minutos
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
+  message: 'Muitas requisições, tente novamente mais tarde',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Aplicar rate limit apenas em rotas públicas sensíveis
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true
+});
+
+// ==================== CORS ====================
+
+const corsOptions = {
+  origin: [
+    'https://lbarber.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:5500',
+    process.env.FRONTEND_URL
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
+  maxAge: 86400 // 24 horas
+};
+
+app.use(cors(corsOptions));
+
+// Para desenvolvimento, aceite qualquer origem (NÃO use em produção!) ======================================
+if (process.env.NODE_ENV === 'development') {
+  app.use(cors({
+    origin: '*', // Aceita qualquer origem em dev
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
+}
+
+// ==================== SESSION & PASSPORT ====================
+
+app.use(passport.initialize());
+// ==================== PARSING ====================
+
+const rawBodySaver = function (req, res, buf, encoding) {
+  if (buf && buf.length) req.rawBody = buf.toString(encoding || 'utf8');
+};
+
+// Save raw body to req.rawBody for webhook HMAC validation
+app.use(bodyParser.json({ limit: '10mb', verify: rawBodySaver }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true, verify: rawBodySaver }));
+
+// ==================== STATIC FILES ====================
+
+app.use(express.static('public', {
+  maxAge: '1d', // Cache por 1 dia
+  etag: false
+}));
+
+// ==================== HEALTH CHECK ====================
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// ==================== UPTIMEROBOT PING ====================
+
+app.get('/ping', (req, res) => {
+  res.status(200).send('ok');
+});
+
+// ==================== ROTAS ====================
+
+// GET /assinatura/:id - Obter dados da assinatura do usuário
+// O id passado é assinaturas_usuarios.id (não assinatura.id!)
+// A função recupera os dados do plano conectado via plano_id
+app.get('/assinatura/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = require('./src/config/database');
+    
+    // First, get the assinaturas_usuarios record with the plan id
+    const usuarioAssinaturaResult = await pool.query(`
+      SELECT au.id, au.usuario_id, au.plano_id, au.status, au.data_inicio, au.data_fim, au.proxima_cobranca
+      FROM assinaturas_usuarios au
+      WHERE au.id = $1
+    `, [id]);
+    
+    if (usuarioAssinaturaResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Assinatura do usuário não encontrada' });
+    }
+    
+    const usuarioAssinatura = usuarioAssinaturaResult.rows[0];
+    const planoId = usuarioAssinatura.plano_id;
+    
+    // Now get the plan details with days of week
+    const planoResult = await pool.query(`
+      SELECT 
+        a.*,
+        json_agg(DISTINCT ads.dia_semana) as dias_semana,
+        json_agg(DISTINCT JSONB_BUILD_OBJECT('id', s.id, 'nome_servico', s.nome_servico, 'valor_servico', s.valor_servico)) FILTER (WHERE s.id IS NOT NULL) as servicos_inclusos
+      FROM assinatura a
+      LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
+      LEFT JOIN assinatura_servico asv ON a.id = asv.assinatura_id
+      LEFT JOIN servicos s ON asv.servico_id = s.id
+      WHERE a.id = $1
+      GROUP BY a.id
+    `, [planoId]);
+    
+    if (planoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plano não encontrado' });
+    }
+    
+    const plano = planoResult.rows[0];
+    plano.dias_semana = (plano.dias_semana || []).filter(d => d !== null);
+    plano.servicos_inclusos = (plano.servicos_inclusos || []).filter(s => s && s.id);
+    
+    res.json({ 
+      assinatura: plano
+    });
+  } catch (error) {
+    console.error('Erro ao buscar assinatura:', error);
+    res.status(500).json({ error: 'Erro ao buscar assinatura' });
+  }
+});
+
+// Rate limit em rotas de autenticação
+app.use('/auth/login', authLimiter);
+app.use('/auth/registrar', authLimiter);
+app.use('/auth/esqueci-senha', authLimiter);
+
+// Rotas com rate limit geral
+app.use('/auth', limiter, authRoutes);
+app.use('/usuarios', limiter, usuarioRoutes);
+app.use('/agendamentos', limiter, agendamentoRoutes);
+app.use('/servicos', limiter, servicoRoutes);
+app.use('/barbeiros', limiter, barbeiroRoutes);
+// app.use('/pagamentos', limiter, paymentRoutes);
+// app.use('/assinaturas', limiter, assinaturaRoutes);
+app.use('/subscricoes-recorrentes', limiter, subscriptionRecurrentRoutes);
+// Mappings com prefixo /api para compatibilidade com frontend
+app.use('/api/subscricoes-recorrentes', limiter, subscriptionRecurrentRoutes);
+app.use('/admin', limiter, adminRoutes);
+
+// Webhooks - SEM rate limit (pode receber múltiplas requisições)
+app.use('/webhooks', webhookRoutes);
+// também aceitar /api/webhooks por compatibilidade (public)
+app.use('/api/webhooks', webhookRoutes);
+
+// Rotas de admin (requer autenticação e privilégios de admin)
+// app.use('/admin', authMiddleware.authenticateToken, adminMiddleware.verifyAdmin, require('./src/routes/admin'));
+
+
+// ==================== 404 HANDLER ====================
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Rota não encontrada'
+  });
+});
+
+// ==================== ERROR HANDLER ====================
+
+app.use(errorHandler);
+
+// ==================== INICIAR SERVIDOR ====================
+
+const server = app.listen(port, () => {
+  logger.info(`🚀 Servidor rodando em http://localhost:${port}`);
+  logger.info(`📡 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Iniciar agendador de cobranças recorrentes
+  if (process.env.NODE_ENV !== 'test') {
+    ChargeScheduler.start();
+  }
+});
+
+// ==================== GRACEFUL SHUTDOWN ====================
+
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM recebido. Encerrando servidor gracefully...');
+  ChargeScheduler.stop();
+  server.close(() => {
+    logger.info('Servidor encerrado');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT recebido. Encerrando servidor gracefully...');
+  ChargeScheduler.stop();
+  server.close(() => {
+    logger.info('Servidor encerrado');
+    process.exit(0);
+  });
+});
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection:', { reason });
+});
+
+module.exports = app;

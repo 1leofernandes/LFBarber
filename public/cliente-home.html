@@ -1,0 +1,2616 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="assets/image0 (1).jpeg" type="image/jpeg">
+    <title>Início - Barbearia Silva</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="assets/image0 (1).jpeg" type="image/x-icon">
+
+    <!-- meta tags -->
+
+    <meta name="description" content="Faça login na Barbearia Silva para agendar seus cortes de cabelo, acompanhar seus agendamentos e acessar promoções exclusivas. Acesse sua conta agora!"/>
+    <meta name="keywords" content="login, barbearia, agendamento, cortes de cabelo, promoções, conta, acesso"/>
+    <meta name="author" content="LF Software"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="Início - Barbearia Silva"/>
+    <meta property="og:description" content="Faça login na Barbearia Silva para agendar seus cortes de cabelo, acompanhar seus agendamentos e acessar promoções exclusivas. Acesse sua conta agora!"/>
+    <meta property="og:image" content="assets/image0 (1).jpeg"/>
+    <meta property="og:url" content="https://barbeariasilva.vercel.app/cliente-home.html"/>
+    <meta property="og:site_name" content="Barbearia Silva"/>
+
+    <style>
+        :root {
+            --primary-dark: #121212;
+            --secondary-dark: #1a1a1a;
+            --accent-gold: #d4af37;
+            --light-gold: #e6c567;
+            --dark-gold: #b8860b;
+            --light-gray: #f5f5f5;
+            --medium-gray: #8c8c8c;
+            --success: #28a745;
+            --error: #dc3545;
+            --card-bg: #1e1e1e;
+            --modal-bg: rgba(0, 0, 0, 0.85);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-dark);
+            color: var(--light-gray);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: linear-gradient(rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.95)), 
+                            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%232a2a2a" stroke-width="1"/></svg>');
+            background-size: 50px;
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar Menu */
+        .sidebar {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-right: 1px solid rgba(212, 175, 55, 0.15);
+            z-index: 1000;
+            transition: left 0.3s ease;
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .sidebar-logo {
+            height: 40px;
+            filter: drop-shadow(0 0 4px rgb(255, 255, 255));
+            border-radius: 8px;
+        }
+        
+        .sidebar-brand {
+            font-size: 1.4rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 1rem 1.5rem;
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            border-left-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(212, 175, 55, 0.15);
+            border-left-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .menu-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .menu-item.logout {
+            color: var(--error);
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .menu-item.logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        
+        /* Overlay para fechar sidebar em mobile */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        /* Modal Overlay - Para Perfil e Informações */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 800px;
+            max-height:85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            transform: translateY(30px);
+            transition: transform 0.4s ease;
+            margin: auto;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-title i {
+            color: var(--accent-gold);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--medium-gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light-gray);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background-color: rgba(40, 40, 40, 0.7);
+            border: 1px solid rgba(80, 80, 80, 0.3);
+            border-radius: 8px;
+            color: var(--light-gray);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            background-color: rgba(50, 50, 50, 0.7);
+        }
+        
+        .form-control:disabled {
+            background-color: rgba(30, 30, 30, 0.5);
+            color: var(--medium-gray);
+            cursor: not-allowed;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            background-color: rgba(40, 40, 40, 0.5);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border-left: 4px solid var(--accent-gold);
+        }
+        
+        .info-item-title {
+            font-weight: 600;
+            color: var(--light-gray);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-item-title i {
+            color: var(--accent-gold);
+        }
+        
+        .info-item-content {
+            color: var(--medium-gray);
+            line-height: 1.6;
+        }
+        
+        /* Button Styles */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background-color: var(--primary-dark);
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-toggle:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+        }
+        
+        .navbar-logo {
+            height: 40px;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.87));
+            border-radius: 8px;
+        }
+
+        /* Subscription Status Badge */
+        .subscription-badge-wrapper { display:flex; align-items:center; gap:8px; margin-left:12px; }
+        .subscription-badge { font-size:0.9rem; padding:6px 12px; border-radius:16px; font-weight:600; }
+        .subscription-badge.ativa { background: rgba(40,167,69,0.12); color: var(--success); border:1px solid rgba(40,167,69,0.18); }
+        .subscription-badge.pendente { background: rgba(255,193,7,0.12); color: var(--warning); border:1px solid rgba(255,193,7,0.18); }
+        .subscription-badge.cancelada { background: rgba(220,53,69,0.12); color: var(--error); border:1px solid rgba(220,53,69,0.18); }
+        .subscription-badge.suspensa { background: rgba(108,117,125,0.12); color: #6c757d; border:1px solid rgba(108,117,125,0.18); }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .welcome-section {
+            margin-bottom: 2.5rem;
+        }
+        
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: var(--medium-gray);
+        }
+        
+        /* Cards */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 5rem;
+        }
+        
+        .card {
+            background: linear-gradient(145deg, var(--card-bg), #191919);
+            border-radius: 16px;
+            padding: 1.8rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            color: var(--accent-gold);
+        }
+        
+        .plan-status {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-active {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: var(--success);
+        }
+        
+        .status-inactive {
+            background-color: rgba(108, 117, 125, 0.15);
+            color: var(--medium-gray);
+        }
+        
+        .plan-description {
+            color: var(--medium-gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        
+        /* Agendamentos List - TEMA ESCURO/DOURADO */
+        .agendamentos-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .agendamento-item {
+            background: linear-gradient(145deg, #1e1e1e, #191919);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-left: 4px solid var(--accent-gold);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .agendamento-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.03), transparent);
+            z-index: 1;
+        }
+        
+        .agendamento-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+        
+        .agendamento-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .agendamento-id {
+            font-weight: 600;
+            color: var(--light-gray);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .agendamento-id::before {
+            content: '#';
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        .status-active {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .status-completed {
+            background-color: rgba(23, 162, 184, 0.15);
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.3);
+        }
+        
+        .status-cancelled {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: var(--error);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .agendamento-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--medium-gray);
+            font-size: 0.95rem;
+        }
+        
+        .detail-item i {
+            color: var(--accent-gold);
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+        
+        .agendamento-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .btn-action {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(40, 40, 40, 0.7);
+            color: var(--light-gray);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .btn-action:hover {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+        
+        .btn-action.btn-primary {
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+        
+        .btn-action.btn-primary:hover {
+            background: linear-gradient(to right, var(--light-gold), var(--accent-gold));
+            color: var(--primary-dark);
+        }
+        
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-action:disabled:hover {
+            background: rgba(40, 40, 40, 0.7);
+            color: var(--light-gray);
+        }
+        
+        .agendamentos-counter {
+            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            color: var(--light-gray);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .agendamentos-counter::before {
+            content: '📋';
+            font-size: 1.2rem;
+        }
+        
+        /* Estados vazios */
+        .no-data, .loading, .error-message {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--medium-gray);
+        }
+        
+        .no-data i, .error-message i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--medium-gray);
+            opacity: 0.5;
+        }
+        
+        .error-message i {
+            color: var(--error);
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .loading::after {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-retry {
+            margin-top: 1rem;
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-retry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--medium-gray);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--medium-gray);
+            opacity: 0.5;
+        }
+        
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Botão Flutuante */
+        .floating-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+            z-index: 99;
+            border: none;
+            text-decoration: none;
+        }
+        
+        .floating-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
+        }
+        
+        .floating-btn-text {
+            position: absolute;
+            right: 70px;
+            background: var(--card-bg);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .floating-btn:hover .floating-btn-text {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        /* Footer */
+        .footer {
+            background-color: var(--primary-dark);
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 1rem;
+        }
+        
+        .social-link {
+            color: var(--medium-gray);
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+        
+        .social-link:hover {
+            color: var(--accent-gold);
+        }
+        
+        /* Serviços Populares */
+        .servicos-populares {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .servico-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: rgba(40, 40, 40, 0.5);
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .servico-item:hover {
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+        
+        .servico-item h4 {
+            color: var(--light-gray);
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+        
+        .servico-item p {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+        
+        .servico-item span {
+            color: var(--accent-gold);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        /* Botões de perigo */
+        .btn-danger {
+            background: linear-gradient(to right, var(--error), #c82333);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(to right, #c82333, #bd2130);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Estilo para o ícone de lixeira no botão outline */
+        .btn-outline .fa-trash {
+            color: var(--error);
+        }
+        
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* Estilo do plano ativo */
+        .plan-highlight {
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(180, 140, 11, 0.05));
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        /* Responsividade */
+        @media (min-width: 768px) {
+            .cards-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+            
+            .card-plano {
+                grid-column: span 2;
+            }
+            
+            .navbar {
+                padding: 1.2rem 2rem;
+            }
+            
+            .main-content {
+                padding: 2.5rem 2rem;
+            }
+            
+            .floating-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .agendamento-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .sidebar {
+                left: 0;
+                width: 280px;
+            }
+            
+            .main-content {
+                margin-left: 280px;
+                padding: 2.5rem 3rem;
+            }
+            
+            .navbar-left {
+                margin-left: 280px;
+            }
+            
+            .menu-toggle {
+                display: none;
+            }
+            
+            .cards-container {
+                grid-template-columns: 2fr 1fr;
+            }
+            
+            .card-plano {
+                grid-column: span 2;
+            }
+            
+            .agendamento-details {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 1023px) {
+            .sidebar.active ~ .main-content,
+            .sidebar.active ~ .navbar-left {
+                margin-left: 0;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.3rem;
+            }
+            
+            .navbar-logo {
+                height: 35px;
+            }
+            
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .agendamento-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .agendamento-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .agendamento-actions {
+                flex-direction: column;
+            }
+            
+            .btn-action {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .servicos-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .service-name {
+            font-weight: 500;
+        }
+        
+        .service-price {
+            color: #22c55e;
+            font-weight: 600;
+        }
+        
+        .valor-total {
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        #toggleHistoricoBtn {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 0.4rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #toggleHistoricoBtn:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Responsividade para o contador */
+        @media (max-width: 767px) {
+            .agendamentos-counter {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            #toggleHistoricoBtn {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay para fechar sidebar em mobile -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- Modal para Perfil -->
+    <div class="modal-overlay" id="perfilModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-user"></i>
+                    Meu Perfil
+                </h2>
+                <button class="modal-close" id="closePerfilModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nome Completo</label>
+                    <input type="text" class="form-control" id="profileName" value="Cliente Silva">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="profileEmail" value="cliente@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Telefone</label>
+                    <input type="tel" class="form-control" id="profilePhone" value="(11) 99999-9999">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Status da Assinatura</label>
+                    <input type="text" class="form-control" value="Plano Básico" disabled>
+                </div>
+                <!-- <button class="btn btn-primary btn-block" id="saveProfileBtn">
+                    <i class="fas fa-save"></i>
+                    Salvar Alterações
+                </button> -->
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button class="btn btn-primary btn-block" id="saveProfileBtn">
+                        <i class="fas fa-save"></i>
+                        Salvar Alterações
+                    </button>
+                    <button class="btn btn-outline" id="deleteAccountBtn" style="flex: 0 0 auto;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Informações -->
+    <div class="modal-overlay" id="informacoesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informações da Barbearia
+                </h2>
+                <button class="modal-close" id="closeInfoModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-clock"></i>
+                            Horário de Funcionamento
+                        </h3>
+                        <div class="info-item-content">
+                            <p><strong>Segunda a Sexta:</strong> 08:30 - 19:00</p>
+                            <p><strong>Sábado:</strong> 08:30 - 18:30</p>
+                            <p><strong>Domingo:</strong> Fechado</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Localização
+                        </h3>
+                        <div class="info-item-content">
+                            <p><strong>Endereço:</strong> Av. Esmeraldas QD 28 LT 02</p>
+                            <p><strong>Setor:</strong> Recanto das Minas Gerais</p>
+                            <p><strong>Cidade:</strong> Goiânia - GO</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-phone"></i>
+                            Contato
+                        </h3>
+                        <div class="info-item-content">
+                            <p><strong>Instagram:</strong> sillvabarbearia</p>
+                            <p><strong>WhatsApp:</strong> (62) 9 8259-4295</p>
+                            <p><strong>E-mail:</strong> contato@barbeariasilva.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-star"></i>
+                            Nossos Valores
+                        </h3>
+                        <div class="info-item-content">
+                            <p>• Atendimento personalizado</p>
+                            <p>• Produtos de qualidade premium</p>
+                            <p>• Ambiente climatizado e aconchegante</p>
+                            <p>• Profissionais especializados</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <h3 class="info-item-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Políticas
+                    </h3>
+                    <div class="info-item-content">
+                        <p><strong>Cancelamento:</strong> Até 2 horas antes do horário marcado.</p>
+                        <p><strong>Atraso:</strong> Tolerância de 15 minutos.</p>
+                        <p><strong>Pagamento:</strong> Aceitamos todas as bandeiras.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Completar Telefone -->
+    <div class="modal-overlay" id="completePhoneModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-phone"></i>
+                    Complete seu Cadastro
+                </h2>
+                <button class="modal-close" id="closePhoneModal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: var(--medium-gray); font-size: 0.95rem;">
+                    Para melhor atendimento em caso de imprevistos, digite seu número de telefone.
+                </p>
+                <div class="form-group">
+                    <label class="form-label">Telefone (Celular)</label>
+                    <input 
+                        type="tel" 
+                        class="form-control" 
+                        id="completePhoneInput" 
+                        placeholder="(62) 90000-0000"
+                        maxlength="15"
+                        required
+                    >
+                </div>
+                <button class="btn btn-primary btn-block" id="savePhoneBtn">
+                    <i class="fas fa-check"></i> Salvar Telefone
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Menu -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="sidebar-logo">
+            <div class="sidebar-brand">Barbearia Silva</div>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <a href="#" class="menu-item active" data-page="inicio">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="agendamento.html" class="menu-item" data-page="agendamentos">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Agendamentos</span>
+            </a>
+            <a href="minha-assinatura.html" class="menu-item" data-page="assinatura">
+                <i class="fas fa-crown"></i>
+                <span>Assinatura</span>
+            </a>
+            <a href="#" class="menu-item" id="openPerfilModal" data-page="perfil">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </a>
+            <a href="#" class="menu-item" id="openInfoModal" data-page="informacoes">
+                <i class="fas fa-info-circle"></i>
+                <span>Informações</span>
+            </a>
+            <a href="login.html" class="menu-item logout" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="page-title" id="pageTitle">Início</div>
+        </div>
+        <div id="subscriptionStatus" class="subscription-badge-wrapper"></div>
+        <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="navbar-logo">
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="welcome-section">
+            <h1 class="welcome-title" id="welcomeTitle">Bem-vindo, Cliente </h1>
+            <p class="welcome-subtitle">Gerencie seus agendamentos e aproveite nossos serviços</p>
+        </div>
+        
+        <div class="cards-container">
+            <!-- Card do Plano -->
+            <div class="card card-plano fade-in" id="planCard">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-crown"></i>
+                        Seu Plano
+                    </h2>
+                    <span class="plan-status" id="planStatus">Inativo</span>
+                </div>
+                <p class="plan-description" id="planDescription">
+                    Aproveite diversos benefícios com uma assinatura recorrente
+                </p>
+                <button class="btn btn-primary" id="planActionBtn">
+                    <i class="fas fa-gem"></i>
+                    Se torne um assinante
+                </button>
+            </div>
+            
+            <!-- Card de Próximos Agendamentos -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-calendar-check"></i>
+                        Próximos Agendamentos
+                    </h2>
+                </div>
+                <div class="agendamentos-list" id="agendamentosList">
+                    <!-- Os agendamentos serão carregados aqui via JavaScript -->
+                    <div class="empty-state">
+                        <i class="far fa-calendar"></i>
+                        <p>Você não tem nenhum agendamento marcado</p>
+                        <a href="agendamento.html" class="btn btn-outline">
+                            <i class="fas fa-plus"></i>
+                            Agendar agora
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card de Últimos Serviços (Opcional) -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-cut"></i>
+                        Serviços Populares
+                    </h2>
+                </div>
+                <div class="servicos-populares">
+                    <div class="servico-item">
+                        <div>
+                            <h4>Corte</h4>
+                            <p>Estilo clássico e moderno</p>
+                        </div>
+                        <span>R$ 35,00</span>
+                    </div>
+                    <div class="servico-item">
+                        <div>
+                            <h4>Barba Completa</h4>
+                            <p>Tratamento e modelagem</p>
+                        </div>
+                        <span>R$ 30,00</span>
+                    </div>
+                    <div class="servico-item">
+                        <div>
+                            <h4>Corte + Sobrancelha</h4>
+                            <p>Corte de cabelo e modelagem da sobrancelha</p>
+                        </div>
+                        <span>R$ 40,00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Botão Flutuante -->
+    <a href="agendamento.html" class="floating-btn">
+        <i class="fas fa-plus"></i>
+        <span class="floating-btn-text">Novo Agendamento</span>
+    </a>
+    <!-- Adicione este modal antes do footer -->
+    <div class="modal-overlay" id="confirmDeleteModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Confirmar Exclusão
+                </h2>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <i class="fas fa-trash" style="font-size: 3rem; color: var(--error); margin-bottom: 1rem;"></i>
+                    <h3 style="color: var(--light-gray); margin-bottom: 0.5rem;">Tem certeza?</h3>
+                    <p style="color: var(--medium-gray); line-height: 1.6;">
+                        Esta ação não pode ser desfeita. Todos os seus dados, agendamentos e histórico serão permanentemente removidos.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button class="btn btn-outline" id="cancelDeleteBtn" style="flex: 1;">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button class="btn" id="confirmDeleteBtn" style="flex: 1; background: var(--error); color: white;">
+                        <i class="fas fa-trash"></i>
+                        Excluir Conta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Barbearia Silva - Sistema de Agendamento. Todos os direitos reservados.</p>
+        <a href="termos-uso.html" style="color: var(--accent-gold); text-decoration: none;">Termos de Uso</a> || <a href="politica-privacidade.html" style="color: var(--accent-gold); text-decoration: none;">Política de Privacidade</a>.
+        <div class="social-links">
+            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
+        </div>
+    </footer>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get('token');
+
+        if (tokenFromUrl) {
+            localStorage.setItem('token', tokenFromUrl);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        // Configurações iniciais
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://barbeariasilva.onrender.com';
+        
+        // Verificar autenticação
+        const token = localStorage.getItem('token');
+        const nomeUsuario = localStorage.getItem('nome') || 'Cliente';
+        
+        if (!token) {
+            window.location.href = 'login.html';
+        } else {
+            function parseJwt(token) {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                return JSON.parse(atob(base64));
+            }
+
+            document.getElementById('welcomeTitle').textContent = `bem-vindo, ${nomeUsuario}`;
+
+            const userData = parseJwt(token);
+            localStorage.setItem('nome', userData.nome);
+            localStorage.setItem('role', userData.role);
+            localStorage.setItem('roles', userData.roles);
+
+            // Redirecionar admin ou barbeiro para suas páginas (cliente-home é apenas para cliente)
+            if (userData.roles === 'admin') {
+                window.location.href = 'admin.html';
+            } else if (userData.role === 'barbeiro') {
+                window.location.href = 'barbeiro.html';
+            } else {
+            
+                // Estado do usuário
+                let usuario = {
+                    nome: nomeUsuario,
+                    assinante: false,
+                    assinatura_id: null,
+                    plano: null
+                };
+
+                // Estado para controle de histórico
+                let mostrarHistorico = false;
+                let todosAgendamentos = []; // Para armazenar todos os agendamentos
+                
+                // Dados de agendamentos
+                const agendamentos = [];
+                
+                // Elementos DOM
+                const sidebar = document.getElementById('sidebar');
+                const menuToggle = document.getElementById('menuToggle');
+                const overlay = document.getElementById('overlay');
+                const pageTitle = document.getElementById('pageTitle');
+                const welcomeTitle = document.getElementById('welcomeTitle');
+                const planCard = document.getElementById('planCard');
+                const planStatus = document.getElementById('planStatus');
+                const planDescription = document.getElementById('planDescription');
+                const planActionBtn = document.getElementById('planActionBtn');
+                const agendamentosList = document.getElementById('agendamentosList');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const menuItems = document.querySelectorAll('.menu-item');
+                
+                // Modal Elements
+                const perfilModal = document.getElementById('perfilModal');
+                const informacoesModal = document.getElementById('informacoesModal');
+                const openPerfilModalBtn = document.getElementById('openPerfilModal');
+                const openInfoModalBtn = document.getElementById('openInfoModal');
+                const closePerfilModalBtn = document.getElementById('closePerfilModal');
+                const closeInfoModalBtn = document.getElementById('closeInfoModal');
+                const saveProfileBtn = document.getElementById('saveProfileBtn');
+                const profileName = document.getElementById('profileName');
+                const profileEmail = document.getElementById('profileEmail');
+                const profilePhone = document.getElementById('profilePhone');
+
+                const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+                const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+                const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+                const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+                const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                const confirmPassword = document.getElementById('confirmPassword');
+                
+                // Inicializar página
+                function initPage() {
+                    // Atualizar nome do usuário
+                    welcomeTitle.textContent = `Bem-vindo, ${usuario.nome}`;
+                    
+                    // Carregar dados do perfil (que inclui dados de assinatura)
+                    loadProfileData();
+                    
+                    // Carregar agendamentos
+                    loadAgendamentos();
+                    
+                    // Configurar eventos
+                    setupEventListeners();
+                }
+                
+                // Configurar plano do usuário
+                function setupUserPlan() {
+                    if (usuario.assinante && usuario.plano) {
+                        planCard.classList.add('plan-highlight');
+                        planStatus.textContent = 'Ativo';
+                        planStatus.className = 'plan-status status-active';
+                        
+                        // Construir descrição com nome do plano
+                        const nomePlano = usuario.plano.nome_plano || 'Plano';
+                        planDescription.textContent = `Você está aproveitando as vantagens do "${nomePlano}"`;
+                        
+                        planActionBtn.innerHTML = '<i class="fas fa-info-circle"></i> Detalhes sobre o plano';
+                        planActionBtn.onclick = () => {
+                            // let detalhes = `Detalhes da Assinatura:\n\n`;
+                            // detalhes += `Plano: ${usuario.plano.nome_plano || 'Não especificado'}\n`;
+                            // if (usuario.plano.descricao) {
+                            //     detalhes += `Descrição: ${usuario.plano.descricao}\n`;
+                            // }
+                            // if (usuario.plano.servicos) {
+                            //     detalhes += `Serviços: ${usuario.plano.servicos}\n`;
+                            // }
+                            // if (usuario.plano.valor) {
+                            //     detalhes += `Valor: R$ ${parseFloat(usuario.plano.valor).toFixed(2)}/mês`;
+                            // }
+                            // alert(detalhes);
+                            window.location.href = 'minha-assinatura.html';
+                        };
+                    } else {
+                        planCard.classList.remove('plan-highlight');
+                        planStatus.textContent = 'Inativo';
+                        planStatus.className = 'plan-status status-inactive';
+                        planDescription.textContent = 'Aproveite diversos benefícios com uma assinatura recorrente';
+                        planActionBtn.innerHTML = '<i class="fas fa-gem"></i> Se torne um assinante';
+                        planActionBtn.onclick = () => {
+                            window.location.href = 'assinatura.html';
+                        };
+                    }
+                }
+                
+                // Carregar dados do perfil do localStorage
+                async function loadProfileData() {
+                    try {
+                        // Buscar dados da API
+                        const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const userDataFromAPI = await response.json();
+                            
+                            // Atualizar dados do usuário
+                            usuario.nome = userDataFromAPI.nome;
+                            usuario.assinante = userDataFromAPI.assinante || false;
+                            usuario.assinatura_id = userDataFromAPI.assinatura_id;
+                            
+                            // Se o usuário é assinante, extrair dados da assinatura
+                            if (usuario.assinante && userDataFromAPI.plano_id) {
+                                usuario.plano = {
+                                    id: userDataFromAPI.plano_id,
+                                    nome_plano: userDataFromAPI.nome_plano,
+                                    descricao: userDataFromAPI.descricao,
+                                    servicos: userDataFromAPI.servicos,
+                                    valor: userDataFromAPI.valor,
+                                    status: userDataFromAPI.plano_status
+                                };
+                            }
+                            
+                            // Atualizar o card do plano com os dados reais
+                            setupUserPlan();
+                            
+                            // Preencher campos com dados da API
+                            if (userDataFromAPI.nome) {
+                                profileName.value = userDataFromAPI.nome;
+                            }
+                            if (userDataFromAPI.email) {
+                                profileEmail.value = userDataFromAPI.email;
+                            }
+                            if (userDataFromAPI.telefone) {
+                                profilePhone.value = userDataFromAPI.telefone;
+                            }
+                            
+                            // Salvar no localStorage para cache
+                            localStorage.setItem('userName', userDataFromAPI.nome || '');
+                            localStorage.setItem('userEmail', userDataFromAPI.email || '');
+                            localStorage.setItem('userPhone', userDataFromAPI.telefone || '');
+                            localStorage.setItem('assinante', usuario.assinante);
+                            localStorage.setItem('assinatura_id', usuario.assinatura_id || '');
+                            
+                            // VERIFICAR SE TELEFONE ESTÁ VAZIO - Exibir modal
+                            if (!userDataFromAPI.telefone || userDataFromAPI.telefone.trim() === '') {
+                                setTimeout(() => {
+                                    const completePhoneModal = document.getElementById('completePhoneModal');
+                                    if (completePhoneModal) {
+                                        openModal(completePhoneModal);
+                                    }
+                                }, 500);
+                            }
+                            
+                        } else {
+                            // Se API falhar, usar dados do localStorage ou token
+                            console.log('API falhou, usando cache...');
+                            useFallbackData();
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar perfil:', error);
+                        useFallbackData();
+                    }
+                }
+
+                function useFallbackData() {
+                    const savedName = localStorage.getItem('userName');
+                    const savedEmail = localStorage.getItem('userEmail');
+                    const savedPhone = localStorage.getItem('userPhone');
+                    
+                    if (savedName) profileName.value = savedName;
+                    if (savedEmail) profileEmail.value = savedEmail;
+                    if (savedPhone) profilePhone.value = savedPhone;
+                    
+                    // Usar dados do token como fallback
+                    if (!savedName && userData.nome) {
+                        profileName.value = userData.nome;
+                    }
+                    if (!savedEmail && userData.email) {
+                        profileEmail.value = userData.email;
+                    }
+                    if (!savedPhone && userData.telefone) {
+                        profilePhone.value = userData.telefone;
+                    }
+                }
+                
+                // Salvar dados do perfil
+                async function saveProfileData() {
+                    const dadosAtualizados = {
+                        nome: profileName.value.trim(),
+                        email: profileEmail.value.trim(),
+                        telefone: profilePhone.value.trim()
+                    };
+                    
+                    // Validação básica
+                    if (!dadosAtualizados.nome || !dadosAtualizados.email) {
+                        showNotification('Nome e email são obrigatórios', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                            method: 'PUT',
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(dadosAtualizados)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            // Atualizar localStorage
+                            localStorage.setItem('userName', dadosAtualizados.nome);
+                            localStorage.setItem('userEmail', dadosAtualizados.email);
+                            localStorage.setItem('userPhone', dadosAtualizados.telefone || '');
+                            
+                            showNotification('Perfil atualizado com sucesso!', 'success');
+                            
+                            setTimeout(() => {
+                                closeModal(perfilModal);
+                            }, 1500);
+                        } else {
+                            showNotification(data.error || 'Erro ao atualizar perfil', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao salvar perfil:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                    }
+                }
+
+                async function deleteAccount() {
+
+                    const originalText = confirmDeleteBtn.innerHTML;
+                    confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+                    confirmDeleteBtn.disabled = true;
+                    
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                            method: 'DELETE',
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            showNotification('Conta excluída com sucesso', 'success');
+                            
+                            // Limpar localStorage e redirecionar
+                            setTimeout(() => {
+                                localStorage.clear();
+                                window.location.href = 'login.html';
+                            }, 2000);
+                            
+                        } else {
+                            showNotification(data.error || 'Erro ao excluir conta', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao excluir conta:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                    }
+                }
+                
+                // Mostrar notificação
+                function showNotification(message, type = 'success') {
+                    // Remover notificação anterior se existir
+                    const existingNotification = document.querySelector('.notification');
+                    if (existingNotification) {
+                        existingNotification.remove();
+                    }
+                    
+                    const notification = document.createElement('div');
+                    notification.className = `notification notification-${type}`;
+                    notification.innerHTML = `
+                        <div style="position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? '#28a745' : '#dc3545'}; 
+                            color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+                            z-index: 3000; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease;">
+                            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                            ${message}
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(notification);
+                    
+                    // Remover após 3 segundos
+                    setTimeout(() => {
+                        notification.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 300);
+                    }, 3000);
+                    
+                    // Adicionar animação CSS
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes slideIn {
+                            from { transform: translateX(100%); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                        @keyframes slideOut {
+                            from { transform: translateX(0); opacity: 1; }
+                            to { transform: translateX(100%); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                
+                // Abrir modal
+                function openModal(modal) {
+                    // Fechar sidebar se estiver aberta
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    
+                    // Abrir modal
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+                
+                // Fechar modal
+                function closeModal(modal) {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+                
+                // Carregar agendamentos
+                async function loadAgendamentos() {
+                    try {
+                        // Mostrar loading
+                        agendamentosList.innerHTML = '<div class="loading">Carregando agendamentos...</div>';
+                        
+                        const token = localStorage.getItem('token');
+                        
+                        if (!token) {
+                            agendamentosList.innerHTML = '<div class="no-data">Faça login para ver seus agendamentos</div>';
+                            return;
+                        }
+                        
+                        const response = await fetch(`${API_BASE_URL}/agendamentos/meus`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Erro ao carregar agendamentos');
+                        }
+                        
+                        const result = await response.json();
+                        
+                        // DEBUG: Verificar estrutura da resposta
+                        console.log('Resposta da API:', result);
+                        console.log('Sucesso:', result.success);
+                        console.log('Agendamentos:', result.agendamentos);
+                        
+                        if (!result.success || !result.agendamentos || result.agendamentos.length === 0) {
+                            agendamentosList.innerHTML = `
+                                <div class="no-data">
+                                    <i class="fas fa-calendar-times"></i>
+                                    <p>Nenhum agendamento encontrado</p>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        // Renderizar agendamentos passando o array correto
+                        // Armazenar todos os agendamentos
+                        todosAgendamentos = result.agendamentos;
+
+                        // Renderizar apenas agendamentos futuros por padrão
+                        filtrarAgendamentosFuturos();
+                        
+                    } catch (error) {
+                        console.error('Erro ao carregar agendamentos:', error);
+                        agendamentosList.innerHTML = `
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>Erro ao carregar agendamentos. Tente novamente.</p>
+                                <button onclick="loadAgendamentos()" class="btn-retry">Tentar novamente</button>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Renderizar agendamentos na lista
+                function renderizarAgendamentos(agendamentosArray) {
+                    agendamentosList.innerHTML = '';
+                    
+                    if (!agendamentosArray || agendamentosArray.length === 0) {
+                        agendamentosList.innerHTML = `
+                            <div class="no-data">
+                                <i class="fas fa-calendar-times"></i>
+                                <p>Nenhum agendamento encontrado</p>
+                                <a href="agendamento.html" class="btn btn-outline" style="margin-top: 1rem;">
+                                    <i class="fas fa-plus"></i>
+                                    Agendar agora
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Contador de agendamentos com botão de histórico
+                    const counter = document.createElement('div');
+                    counter.className = 'agendamentos-counter fade-in';
+                    counter.style.display = 'flex';
+                    counter.style.justifyContent = 'space-between';
+                    counter.style.alignItems = 'center';
+
+                    counter.innerHTML = `
+                        <span id="agendamentos-count">Carregando...</span>
+                        <button class="btn btn-outline" id="toggleHistoricoBtn" style="padding: 0.4rem 1rem; font-size: 0.9rem;">
+                            <i class="fas fa-history"></i> Mostrar Histórico
+                        </button>
+                    `;
+
+                    agendamentosList.appendChild(counter);
+
+                    // Adicionar evento ao botão de histórico
+                    document.getElementById('toggleHistoricoBtn').addEventListener('click', toggleHistoricoAgendamentos);
+                    
+                    // Armazenar todos os agendamentos e mostrar futuros por padrão
+                    todosAgendamentos = agendamentosArray;
+                    filtrarAgendamentosFuturos();
+                }
+
+
+                // Função para filtrar apenas agendamentos futuros
+                function getIsoDateOnly(dateString) {
+                    if (!dateString) return null;
+                    // Se já vem no formato YYYY-MM-DD ou com T, retorna a parte antes do T
+                    if (typeof dateString === 'string') {
+                        return dateString.split('T')[0];
+                    }
+                    // Fallback: criar Date e construir YYYY-MM-DD localmente
+                    const d = new Date(dateString);
+                    return `${d.getFullYear().toString().padStart(4,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                }
+
+                function filtrarAgendamentosFuturos() {
+                    const hoje = new Date();
+                    const hojeIso = `${hoje.getFullYear().toString().padStart(4,'0')}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+
+                    const agendamentosFuturos = todosAgendamentos.filter(agendamento => {
+                        const dataAgendamento = getIsoDateOnly(agendamento.data_agendada);
+                        return dataAgendamento >= hojeIso;
+                    });
+
+                    // Atualizar contador
+                    const countElement = document.getElementById('agendamentos-count');
+                    if (countElement) {
+                        countElement.textContent = `${agendamentosFuturos.length} agendamento(s) futuro(s)`;
+                    }
+
+                    // Renderizar apenas os futuros
+                    renderizarListaAgendamentos(agendamentosFuturos);
+                }
+
+                // Função para mostrar todos os agendamentos (histórico completo)
+                function mostrarTodosAgendamentos() {
+                    // Atualizar contador
+                    const countElement = document.getElementById('agendamentos-count');
+                    if (countElement) {
+                        countElement.textContent = `${todosAgendamentos.length} agendamento(s) no total`;
+                    }
+                    
+                    // Renderizar todos
+                    renderizarListaAgendamentos(todosAgendamentos);
+                }
+
+                // Função para renderizar a lista de agendamentos (reutilizável)
+                function renderizarListaAgendamentos(agendamentosArray) {
+                    // Limpar lista atual
+                    const itemsAtuais = agendamentosList.querySelectorAll('.agendamento-item');
+                    itemsAtuais.forEach(item => item.remove());
+                    
+                    // Remover mensagem de "nenhum agendamento" se existir
+                    const noData = agendamentosList.querySelector('.no-data');
+                    if (noData) noData.remove();
+                    
+                    const errorMessage = agendamentosList.querySelector('.error-message');
+                    if (errorMessage) errorMessage.remove();
+                    
+                    const loading = agendamentosList.querySelector('.loading');
+                    if (loading) loading.remove();
+                    
+                    if (!agendamentosArray || agendamentosArray.length === 0) {
+                        agendamentosList.appendChild(createEmptyState());
+                        return;
+                    }
+                    
+                    // Adicionar cada agendamento
+                    agendamentosArray.forEach(agendamento => {
+                        const agendamentoItem = createAgendamentoItem(agendamento);
+                        agendamentosList.appendChild(agendamentoItem);
+                    });
+                }
+
+                // Função auxiliar para criar estado vazio
+                function createEmptyState() {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'no-data';
+                    emptyDiv.innerHTML = `
+                        <i class="fas fa-calendar-times"></i>
+                        <p>${mostrarHistorico ? 'Nenhum agendamento no histórico' : 'Nenhum agendamento futuro encontrado'}</p>
+                        <a href="agendamento.html" class="btn btn-outline" style="margin-top: 1rem;">
+                            <i class="fas fa-plus"></i>
+                            Agendar agora
+                        </a>
+                    `;
+                    return emptyDiv;
+                }
+
+                // Função auxiliar para criar item de agendamento (extraída da renderizarAgendamentos original)
+                function createAgendamentoItem(agendamento) {
+                    // Formatar data (usar apenas a parte YYYY-MM-DD para evitar shift de timezone)
+                    const dataFormatada = formatarData(agendamento.data_agendada);
+
+                    // Formatar hora
+                    const horaFormatada = formatarHora(agendamento.hora_inicio);
+                    
+                    // Mapear status
+                    const statusMap = {
+                        'confirmado': 'Confirmado',
+                        'pendente': 'Pendente',
+                        'cancelado': 'Cancelado',
+                        'concluido': 'Concluído'
+                    };
+                    
+                    const statusTexto = statusMap[agendamento.status] || agendamento.status;
+                    
+                    // Classes CSS para status
+                    const statusClassMap = {
+                        'confirmado': 'status-active',
+                        'pendente': 'status-pending',
+                        'concluido': 'status-completed',
+                        'cancelado': 'status-cancelled'
+                    };
+                    
+                    const statusClass = statusClassMap[agendamento.status] || 'status-inactive';
+                    
+                    // Calcular valor total de todos os serviços
+                    let valorTotal = 0;
+                    let duracaoTotal = 0;
+                    let servicosHtml = '';
+                    
+                    if (agendamento.servicos && agendamento.servicos.length > 0) {
+                        // Construir HTML dos serviços (usar valor_final se disponível)
+                        servicosHtml = agendamento.servicos.map(servico => {
+                            const valorServico = parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0;
+                            const duracaoServico = parseInt(servico.duracao_servico) || 0;
+                            
+                            valorTotal += valorServico;
+                            duracaoTotal += duracaoServico;
+                            
+                            return `
+                                <div class="service-item">
+                                    <span class="service-name">${servico.nome_servico || 'Serviço'}</span>
+                                    <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        // Fallback para agendamentos antigos com apenas um serviço
+                        const valorServico = parseFloat(agendamento.valor_servico) || 0;
+                        valorTotal = valorServico;
+                        duracaoTotal = 60; // Default
+                        
+                        servicosHtml = `
+                            <div class="service-item">
+                                <span class="service-name">${agendamento.nome_servico || 'Serviço não informado'}</span>
+                                <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Formatar valor total
+                    const valorFormatado = valorTotal.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    });
+                    
+                    const agendamentoItem = document.createElement('div');
+                    agendamentoItem.className = 'agendamento-item fade-in';
+                    agendamentoItem.innerHTML = `
+                        <div class="agendamento-header">
+                            <span class="badge ${statusClass}">
+                                ${statusTexto}
+                            </span>
+                        </div>
+                        
+                        <div class="agendamento-details">
+                            <div class="detail-item">
+                                <i class="fas fa-user"></i>
+                                <span>${agendamento.barbeiro_nome || 'Barbeiro não informado'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-cut"></i>
+                                <div class="servicos-container">
+                                    ${servicosHtml}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <i class="far fa-calendar"></i>
+                                <span>${dataFormatada}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="far fa-clock"></i>
+                                <span>${horaFormatada}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-tag"></i>
+                                <span class="valor-total">${valorFormatado}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Duração: ${duracaoTotal} min</span>
+                            </div>
+                        </div>
+                        
+                        <div class="agendamento-actions">
+                            <button class="btn-action" onclick="cancelarAgendamento(${agendamento.id})" 
+                                    ${agendamento.status !== 'confirmado' ? 'disabled' : ''}>
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button class="btn-action btn-primary" onclick="verDetalhesAgendamento(${agendamento.id})">
+                                <i class="fas fa-eye"></i> Ver Detalhes
+                            </button>
+                            <button class="btn-action" onclick="editarAgendamento(${agendamento.id})" 
+                                    ${agendamento.status !== 'confirmado' ? 'disabled' : ''}>
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </div>
+                    `;
+                    
+                    return agendamentoItem;
+                }
+
+                // Função para alternar entre histórico e futuros
+                function toggleHistoricoAgendamentos() {
+                    mostrarHistorico = !mostrarHistorico;
+                    const btn = document.getElementById('toggleHistoricoBtn');
+                    
+                    if (btn) {
+                        if (mostrarHistorico) {
+                            btn.innerHTML = '<i class="fas fa-calendar-alt"></i> Mostrar Futuros';
+                            mostrarTodosAgendamentos();
+                        } else {
+                            btn.innerHTML = '<i class="fas fa-history"></i> Mostrar Histórico';
+                            filtrarAgendamentosFuturos();
+                        }
+                    }
+                }
+
+                // Função para cancelar agendamento (agora global)
+                async function cancelarAgendamento(agendamentoId) {
+                    if (!confirm('Tem certeza que deseja cancelar este agendamento?')) {
+                        return;
+                    }
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        
+                        // Mostrar loading
+                        const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
+                        const originalText = agendamentoBtn.innerHTML;
+                        agendamentoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
+                        agendamentoBtn.disabled = true;
+                        
+                        // Usar DELETE em vez de PUT (conforme sua rota)
+                        const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.success) {
+                            showNotification('Agendamento cancelado com sucesso!', 'success');
+                            
+                            // Recarregar a lista de agendamentos após 1 segundo
+                            setTimeout(() => {
+                                // Recarregar todos os agendamentos do servidor
+                                loadAgendamentos();
+                            }, 1000);
+                            
+                        } else {
+                            agendamentoBtn.innerHTML = originalText;
+                            agendamentoBtn.disabled = false;
+                            showNotification(data.message || 'Erro ao cancelar agendamento', 'error');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Erro ao cancelar agendamento:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                        
+                        // Restaurar botão
+                        const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
+                        if (agendamentoBtn) {
+                            agendamentoBtn.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+                            agendamentoBtn.disabled = false;
+                        }
+                    }
+                }
+                window.cancelarAgendamento = cancelarAgendamento;
+
+                // Função para ver detalhes do agendamento (agora global)
+                async function verDetalhesAgendamento(agendamentoId) {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.success) {
+                            const agendamento = data.agendamento;
+                            
+                            // Formatar dados para exibição
+                            let detalhesHTML = `
+                                <div style="max-width: 600px;">
+                                    <h3 style="margin-top: 0; color: var(--primary-color);">
+                                        <i class="fas fa-calendar-check"></i> Detalhes do Agendamento #${agendamento.id}
+                                    </h3>
+                                    
+                                    <div style="background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                            <div>
+                                                <strong><i class="fas fa-user"></i> Barbeiro:</strong><br>
+                                                ${agendamento.barbeiro_nome || 'Não informado'}
+                                            </div>
+                                            <div>
+                                                <strong><i class="fas fa-calendar"></i> Data:</strong><br>
+                                                ${formatarData(agendamento.data_agendada)}
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                            <div>
+                                                <strong><i class="fas fa-clock"></i> Horário:</strong><br>
+                                                ${agendamento.hora_inicio} - ${agendamento.hora_fim}
+                                            </div>
+                                            <div>
+                                                <strong><i class="fas fa-info-circle"></i> Status:</strong><br>
+                                                <span class="badge ${getStatusClass(agendamento.status)}">
+                                                    ${getStatusText(agendamento.status)}
+                                                </span>
+                                            </div>
+                                        </div>
+                            `;
+                            
+                            // Adicionar serviços
+                            if (agendamento.servicos && agendamento.servicos.length > 0) {
+                                detalhesHTML += `
+                                    <div style="margin-top: 15px;">
+                                        <strong><i class="fas fa-cut"></i> Serviços:</strong>
+                                        <div style="margin-top: 10px;">
+                                            ${agendamento.servicos.map(servico => `
+                                                <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #dee2e6;">
+                                                    <span>${servico.nome_servico}</span>
+                                                    <span style="color: #28a745; font-weight: bold;">
+                                                        R$ ${parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico || 0).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                // Calcular total
+                                const total = agendamento.servicos.reduce((sum, s) => sum + parseFloat(s.valor_final !== undefined ? s.valor_final : s.valor_servico || 0), 0);
+                                detalhesHTML += `
+                                    <div style="margin-top: 15px; text-align: right; font-weight: bold; font-size: 1.1em;">
+                                        <strong>Total:</strong> R$ ${total.toFixed(2)}
+                                    </div>
+                                `;
+                            }
+                            
+                            detalhesHTML += `
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                        <button onclick="fecharModalDetalhes()" 
+                                                style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;">
+                                            Fechar
+                                        </button>
+                                        ${agendamento.status === 'confirmado' ? `
+                                            <button onclick="cancelarAgendamento(${agendamento.id})" 
+                                                    style="padding: 10px 20px; border: none; border-radius: 8px; background: #dc3545; color: white; cursor: pointer;">
+                                                <i class="fas fa-times"></i> Cancelar Agendamento
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Criar modal para exibir detalhes
+                            const modalId = 'modal-detalhes-agendamento';
+                            let modal = document.getElementById(modalId);
+                            
+                            if (!modal) {
+                                modal = document.createElement('div');
+                                modal.id = modalId;
+                                modal.className = 'modal-overlay';
+                                modal.innerHTML = `
+                                    <div class="modal-content" style="max-width: 700px;">
+                                        <div class="modal-header">
+                                            <h2 class="modal-title">Detalhes do Agendamento</h2>
+                                            <button class="modal-close" onclick="fecharModalDetalhes()">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body" id="${modalId}-body"></div>
+                                    </div>
+                                `;
+                                document.body.appendChild(modal);
+                            }
+                            
+                            document.getElementById(`${modalId}-body`).innerHTML = detalhesHTML;
+                            modal.classList.add('active');
+                            document.body.style.overflow = 'hidden';
+                            
+                        } else {
+                            showNotification(data.message || 'Erro ao carregar detalhes do agendamento', 'error');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Erro ao buscar detalhes do agendamento:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                    }
+                }
+                window.verDetalhesAgendamento = verDetalhesAgendamento;
+
+                // Função para fechar modal de detalhes (agora global)
+                function fecharModalDetalhes() {
+                    const modal = document.getElementById('modal-detalhes-agendamento');
+                    if (modal) {
+                        modal.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    }
+                }
+                window.fecharModalDetalhes = fecharModalDetalhes;
+
+                // Funções auxiliares para status (adicione se não existirem)
+                function getStatusClass(status) {
+                    const statusMap = {
+                        'confirmado': 'status-active',
+                        'pendente': 'status-pending',
+                        'concluido': 'status-completed',
+                        'cancelado': 'status-cancelled'
+                    };
+                    return statusMap[status] || 'status-inactive';
+                }
+
+                function getStatusText(status) {
+                    const statusMap = {
+                        'confirmado': 'Confirmado',
+                        'pendente': 'Pendente',
+                        'concluido': 'Concluído',
+                        'cancelado': 'Cancelado'
+                    };
+                    return statusMap[status] || status;
+                }
+
+                // Função auxiliar para formatar hora
+                function formatarHora(horaString) {
+                    if (!horaString) return 'Hora não informada';
+                    
+                    // Se a hora já está no formato HH:MM:SS, extrair apenas HH:MM
+                    if (horaString.includes(':')) {
+                        const partes = horaString.split(':');
+                        return `${partes[0]}:${partes[1]}`;
+                    }
+                    
+                    return horaString;
+                }
+
+                // Formatar data usando apenas YYYY-MM-DD (evita problemas de timezone)
+                function formatarData(dataString) {
+                    const iso = getIsoDateOnly(dataString);
+                    if (!iso) return '--/--/----';
+                    const [ano, mes, dia] = iso.split('-').map(Number);
+                    const date = new Date(ano, mes - 1, dia);
+                    return date.toLocaleDateString('pt-BR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long'
+                    });
+                }
+
+                // Configurar eventos
+                function setupEventListeners() {
+                    // Toggle sidebar
+                    menuToggle.addEventListener('click', () => {
+                        sidebar.classList.toggle('active');
+                        overlay.classList.toggle('active');
+                    });
+                    
+                    // Fechar sidebar ao clicar no overlay
+                    overlay.addEventListener('click', () => {
+                        sidebar.classList.remove('active');
+                        overlay.classList.remove('active');
+                    });
+                    
+                    // Menu items
+                    menuItems.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            if (item.classList.contains('logout')) {
+                                e.preventDefault();
+                                logout();
+                                return;
+                            }
+                            
+                            if (!item.hasAttribute('href') || item.getAttribute('href') === '#') {
+                                e.preventDefault();
+                                const page = item.getAttribute('data-page');
+                                
+                                // Atualizar item ativo
+                                menuItems.forEach(i => i.classList.remove('active'));
+                                item.classList.add('active');
+                                
+                                // Atualizar título da página
+                                pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+                            }
+                        });
+                    });
+                    
+                    // Abrir modais
+                    openPerfilModalBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openModal(perfilModal);
+                        pageTitle.textContent = 'Perfil';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        openPerfilModalBtn.classList.add('active');
+                    });
+                    
+                    openInfoModalBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openModal(informacoesModal);
+                        pageTitle.textContent = 'Informações';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        openInfoModalBtn.classList.add('active');
+                    });
+                    
+                    // Fechar modais
+                    closePerfilModalBtn.addEventListener('click', () => {
+                        closeModal(perfilModal);
+                        pageTitle.textContent = 'Início';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+                    });
+                    
+                    closeInfoModalBtn.addEventListener('click', () => {
+                        closeModal(informacoesModal);
+                        pageTitle.textContent = 'Início';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+                    });
+                    
+                    // Fechar modal ao clicar no overlay
+                    [perfilModal, informacoesModal].forEach(modal => {
+                        modal.addEventListener('click', (e) => {
+                            if (e.target === modal) {
+                                closeModal(modal);
+                                pageTitle.textContent = 'Início';
+                                menuItems.forEach(i => i.classList.remove('active'));
+                                document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+                            }
+                        });
+                    });
+
+                    deleteAccountBtn.addEventListener('click', (e) => {
+                        openModal(confirmDeleteModal);
+                    });
+
+                    // Fechar modal de confirmação
+                    closeDeleteModalBtn.addEventListener('click', () => {
+                        closeModal(confirmDeleteModal);
+                    });
+                    
+                    cancelDeleteBtn.addEventListener('click', () => {
+                        closeModal(confirmDeleteModal);
+                    });
+                    
+                    // Confirmar exclusão
+                    confirmDeleteBtn.addEventListener('click', deleteAccount);
+                    
+                    // Fechar modal ao clicar fora
+                    confirmDeleteModal.addEventListener('click', (e) => {
+                        if (e.target === confirmDeleteModal) {
+                            closeModal(confirmDeleteModal);
+                        }
+                    });
+                    
+                    // Salvar perfil
+                    saveProfileBtn.addEventListener('click', saveProfileData);
+                    
+                    // ===== LÓGICA DE TELEFONE =====
+                    const completePhoneModal = document.getElementById('completePhoneModal');
+                    const completePhoneInput = document.getElementById('completePhoneInput');
+                    const closePhoneModal = document.getElementById('closePhoneModal');
+                    const savePhoneBtn = document.getElementById('savePhoneBtn');
+                    
+                    if (completePhoneModal && completePhoneInput) {
+                        // Função para mascarar telefone
+                        function mascaraTelefone(value) {
+                            return value.replace(/\D/g, '')
+                                .replace(/^(\d{2})(\d)/g, '($1) $2')
+                                .replace(/(\d)(\d{4})$/, '$1-$2');
+                        }
+                        
+                        // Aplicar máscara ao digitar
+                        completePhoneInput.addEventListener('input', (e) => {
+                            e.target.value = mascaraTelefone(e.target.value);
+                        });
+                        
+                        // Fechar modal
+                        closePhoneModal.addEventListener('click', () => {
+                            closeModal(completePhoneModal);
+                        });
+                        
+                        // Salvar telefone
+                        savePhoneBtn.addEventListener('click', async () => {
+                            const telefoneComMascara = completePhoneInput.value.trim();
+                            
+                            // Validar
+                            if (!telefoneComMascara || telefoneComMascara.length < 14) {
+                                showNotification('Digite um telefone válido', 'error');
+                                return;
+                            }
+                            
+                            // Extrair apenas os 11 dígitos
+                            const telefoneLimpo = telefoneComMascara.replace(/\D/g, '');
+                            
+                            if (telefoneLimpo.length !== 11) {
+                                showNotification('O telefone deve conter 11 dígitos', 'error');
+                                return;
+                            }
+                            
+                            try {
+                                savePhoneBtn.disabled = true;
+                                savePhoneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+                                
+                                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                                    method: 'PUT',
+                                    headers: { 
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        nome: usuario.nome,
+                                        email: profileEmail.value,
+                                        telefone: telefoneLimpo
+                                    })
+                                });
+                                
+                                const data = await response.json();
+                                
+                                if (response.ok) {
+                                    showNotification('Telefone salvo com sucesso!', 'success');
+                                    localStorage.setItem('userPhone', telefoneLimpo);
+                                    
+                                    setTimeout(() => {
+                                        closeModal(completePhoneModal);
+                                        savePhoneBtn.disabled = false;
+                                        savePhoneBtn.innerHTML = '<i class="fas fa-check"></i> Salvar Telefone';
+                                    }, 1500);
+                                } else {
+                                    showNotification(data.error || 'Erro ao salvar telefone', 'error');
+                                    savePhoneBtn.disabled = false;
+                                    savePhoneBtn.innerHTML = '<i class="fas fa-check"></i> Salvar Telefone';
+                                }
+                            } catch (error) {
+                                console.error('Erro ao salvar telefone:', error);
+                                showNotification('Erro de conexão. Tente novamente.', 'error');
+                                savePhoneBtn.disabled = false;
+                                savePhoneBtn.innerHTML = '<i class="fas fa-check"></i> Salvar Telefone';
+                            }
+                        });
+                    }
+                    
+                    // Logout
+                    logoutBtn.addEventListener('click', logout);
+                }
+                
+                // Função de logout
+                function logout() {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('nome');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('userPhone');
+                    window.location.href = 'login.html';
+                }
+                
+                // Simular carregamento de dados da API
+                function fetchUserData() {
+                    // Aqui você faria a chamada real à API
+                    console.log('Dados do usuário carregados');
+                }
+                
+                // Inicializar quando a página carregar
+                document.addEventListener('DOMContentLoaded', () => {
+                    initPage();
+                    fetchUserData();
+                });
+            }
+        }
+        
+        function editarAgendamento(id) {
+            window.location.href = `editar-agendamento.html?id=${id}`;
+        }
+        window.editarAgendamento = editarAgendamento;
+    </script>
+    <script src="/scripts/subscriptionStatus.js"></script>
+</body>
+</html>

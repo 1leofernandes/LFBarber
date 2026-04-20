@@ -1,0 +1,137 @@
+// src/services/usuarioService.js
+const pool = require('../config/database');
+const bcrypt = require('bcrypt');
+
+class UsuarioService {
+    // Buscar usuário por ID
+    async getUsuarioById(id) {
+        try {
+            const query = `
+                SELECT id, nome, email, telefone, role, assinante, assinatura_id, created_at, updated_at
+                FROM usuarios 
+                WHERE id = $1
+            `;
+            const values = [id];
+            
+            const result = await pool.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Erro no getUsuarioById:', error);
+            throw error;
+        }
+    }
+    
+    // Buscar usuário com dados da assinatura
+    // CORRIGIDO: assinatura_id é o ID de assinaturas_usuarios, não de assinatura
+    // Faz dois JOINs: usuarios -> assinaturas_usuarios -> assinatura
+    async getUsuarioComAssinatura(id) {
+        try {
+            const query = `
+                SELECT 
+                    u.id, 
+                    u.nome, 
+                    u.email, 
+                    u.telefone, 
+                    u.role, 
+                    u.assinante, 
+                    u.assinatura_id,
+                    u.created_at, 
+                    u.updated_at,
+                    au.plano_id,
+                    au.status as assinatura_status,
+                    au.data_inicio,
+                    au.data_fim,
+                    au.proxima_cobranca,
+                    a.id as plano_id_real,
+                    a.nome_plano,
+                    a.descricao,
+                    a.servicos,
+                    a.valor,
+                    a.status as plano_status
+                FROM usuarios u
+                LEFT JOIN assinaturas_usuarios au ON u.assinatura_id = au.id AND au.status = 'ativa'
+                LEFT JOIN assinatura a ON au.plano_id = a.id
+                WHERE u.id = $1
+            `;
+            const values = [id];
+            
+            const result = await pool.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Erro no getUsuarioComAssinatura:', error);
+            throw error;
+        }
+    }
+    
+    // Verificar se email já está em uso
+    async verificarEmailEmUso(email, usuarioId) {
+        try {
+            const query = `
+                SELECT id FROM usuarios 
+                WHERE email = $1 AND id != $2
+            `;
+            const values = [email, usuarioId];
+            
+            const result = await pool.query(query, values);
+            return result.rows.length > 0;
+        } catch (error) {
+            console.error('Erro no verificarEmailEmUso:', error);
+            throw error;
+        }
+    }
+    
+    // Atualizar dados do usuário
+    async updateUsuario(id, dados) {
+        try {
+            const { nome, email, telefone } = dados;
+            const query = `
+                UPDATE usuarios 
+                SET nome = $1, email = $2, telefone = $3, updated_at = NOW()
+                WHERE id = $4 
+                RETURNING id, nome, email, telefone, role
+            `;
+            const values = [nome, email, telefone, id];
+            
+            const result = await pool.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Erro no updateUsuario:', error);
+            throw error;
+        }
+    }
+    
+    // Soft delete (marcar como inativo)
+    async deleteUsuario(id) {
+        try {
+            // Iniciar transação
+            await pool.query('BEGIN');
+            
+            // 1. Primeiro deletar agendamentos do usuário
+            const deleteAgendamentosQuery = `
+                DELETE FROM agendamentos 
+                WHERE usuario_id = $1
+            `;
+            await pool.query(deleteAgendamentosQuery, [id]);
+            
+            // 2. Deletar o usuário
+            const deleteUsuarioQuery = `
+                DELETE FROM usuarios 
+                WHERE id = $1
+                RETURNING id
+            `;
+            const result = await pool.query(deleteUsuarioQuery, [id]);
+            
+            // 3. Commit da transação
+            await pool.query('COMMIT');
+            
+            return result.rows[0];
+        } catch (error) {
+            // Rollback em caso de erro
+            await pool.query('ROLLBACK');
+            console.error('Erro no deleteUsuario:', error);
+            throw error;
+        }
+    }
+}
+
+module.exports = new UsuarioService();
