@@ -1,5 +1,5 @@
 // (function(){
-//   const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : (window.location.origin || 'https://barbeariasilva.onrender.com');
+//   const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : (window.location.origin || 'https://lfbarber.onrender.com');
 //   const BADGE_CONTAINER_ID = 'subscriptionStatus';
 //   const POLL_INTERVAL = 60 * 1000; // 60s
 

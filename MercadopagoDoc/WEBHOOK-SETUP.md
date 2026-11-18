@@ -1,7 +1,7 @@
 # Configuração do Webhook (Mercado Pago)
 
 1. URL do webhook (use o BACKEND):
-   - **Webhook URL**: `https://barbeariasilva.onrender.com/webhooks/mercado-pago`
+   - **Webhook URL**: `https://lfbarber.onrender.com/webhooks/mercado-pago`
    - **Por quê?** Webhooks devem apontar para o servidor que processa eventos e atualiza o banco de dados (frontend não deve receber webhooks).
 
 2. Segredo de validação (HMAC):

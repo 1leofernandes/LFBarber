@@ -36,7 +36,7 @@ Certifique-se que o `.env` contém:
 
 ```env
 # Backend
-BACKEND_URL=https://barbeariasilva.onrender.com
+BACKEND_URL=https://lfbarber.onrender.com
 FRONTEND_URL=https://lbarber.vercel.app
 NODE_ENV=production
 PORT=3000
@@ -60,7 +60,7 @@ REDIS_URL=redis://...
 
 ## 🧪 Teste Manual
 
-1. Acesse: `https://barbeariasilva.onrender.com/auth/google`
+1. Acesse: `https://lfbarber.onrender.com/auth/google`
 2. Autorize o acesso ao Google
 3. Aguarde redirect para uma destas URLs:
    - `https://lbarber.vercel.app/admin.html?token=...` (admin)

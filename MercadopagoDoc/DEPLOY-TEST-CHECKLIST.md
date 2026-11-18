@@ -5,10 +5,10 @@
    - MERCADO*PAGO_PUBLIC_KEY=pk*...
    - WEBHOOK_SECRET=uma_chave_segura_e_aleatoria
    - FRONTEND_URL=https://barbeariasilva.vercel.app
-   - BACKEND_URL=https://barbeariasilva.onrender.com
+   - BACKEND_URL=https://lfbarber.onrender.com
 
 2. Endpoints do Mercado Pago
-   - Webhook URL configurado: `https://barbeariasilva.onrender.com/webhooks/mercado-pago` (ou `https://barbeariasilva.onrender.com/api/webhooks/mercado-pago`)
+   - Webhook URL configurado: `https://lfbarber.onrender.com/webhooks/mercado-pago` (ou `https://lfbarber.onrender.com/api/webhooks/mercado-pago`)
    - Eventos habilitados: `payment`, `preapproval`/`subscription`, `plan` (opcional)
 
 3. Deploy do backend

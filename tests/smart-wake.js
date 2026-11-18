@@ -13,20 +13,20 @@ async function main() {
     });
     
     const response = await axios.get(
-      `https://barbeariasilva.onrender.com/agendamentos?${params}`,
+      `https://lfbarber.onrender.com/agendamentos?${params}`,
       { timeout: 5000 } // Timeout curto
     );
     
     if (response.data.length > 0) {
       console.log(`📅 ${response.data.length} agendamento(s) nas próximas 2 horas`);
       // Mantém acordado com um health check
-      await axios.get('https://barbeariasilva.onrender.com/health');
+      await axios.get('https://lfbarber.onrender.com/health');
     } else {
       console.log('😴 Sem agendamentos próximos - pode dormir');
     }
   } catch (error) {
     console.log('⚠️  Erro ao verificar, mantendo acordado por segurança');
-    await axios.get('https://barbeariasilva.onrender.com/health');
+    await axios.get('https://lfbarber.onrender.com/health');
   }
 }
 

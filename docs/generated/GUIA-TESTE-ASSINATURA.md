@@ -158,7 +158,7 @@ WEBHOOK_HMAC_ENABLED=false
 2. Clique em sua aplicação
 3. Configure webhook URL:
    ```
-   https://barbeariasilva.onrender.com/api/webhooks/mercado-pago
+   https://lfbarber.onrender.com/api/webhooks/mercado-pago
    ```
 4. Teste webhook no dashboard do MP
 
@@ -233,7 +233,7 @@ WEBHOOK_HMAC_ENABLED=false
 
 1. [ ] WEBHOOK_HMAC_ENABLED pode permanecer `false` (ou ativar após configurar secret corretamente)
 2. [ ] MERCADO_PAGO_ACCESS_TOKEN é da produção (APP_USR-)
-3. [ ] BACKEND_URL aponta para https://barbeariasilva.onrender.com
+3. [ ] BACKEND_URL aponta para https://lfbarber.onrender.com
 4. [ ] FRONTEND_URL aponta para https://barbeariasilva.vercel.app
 5. [ ] Webhook URL no MP dashboard é a produção
 6. [ ] SSL/HTTPS ativado em ambas URLs
@@ -248,7 +248,7 @@ WEBHOOK_HMAC_ENABLED=false
 | Frontend           | https://barbeariasilva.vercel.app                       |
 | Assinatura         | https://barbeariasilva.vercel.app/assinatura.html       |
 | Minhas Assinaturas | https://barbeariasilva.vercel.app/minha-assinatura.html |
-| Backend            | https://barbeariasilva.onrender.com                     |
+| Backend            | https://lfbarber.onrender.com                     |
 | MP Dashboard       | https://www.mercadopago.com.br/developers/panel         |
 | Render Logs        | https://dashboard.render.com                            |
 

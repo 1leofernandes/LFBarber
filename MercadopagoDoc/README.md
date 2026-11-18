@@ -9,7 +9,7 @@ Arquivos:
 - `TESTS.md` — Passo-a-passo para testar (sandbox e produção), exemplos de payloads
 - `CHANGES.md` — Resumo das alterações feitas no código
 
-Ponto crítico: o webhook deve apontar para o BACKEND do sistema (não para o frontend). Exemplo: `https://barbeariasilva.onrender.com/webhooks/mercado-pago` (ou `https://barbeariasilva.onrender.com/api/webhooks/mercado-pago`)
+Ponto crítico: o webhook deve apontar para o BACKEND do sistema (não para o frontend). Exemplo: `https://lfbarber.onrender.com/webhooks/mercado-pago` (ou `https://lfbarber.onrender.com/api/webhooks/mercado-pago`)
 
 O frontend já contém a integração para listar planos e iniciar o checkout via Mercado Pago:
 

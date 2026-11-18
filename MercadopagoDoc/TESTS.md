@@ -12,7 +12,7 @@
 1. No painel do Mercado Pago (modo sandbox), crie ou use um plano/assinatura.
 2. No front-end, redirecione o usuário para a página de assinatura do Mercado Pago (você pode usar o `mercado_pago_plan_id` salvo na tabela `assinatura`).
 3. Complete o fluxo no MP (usar cartão de teste em sandbox).
-4. No painel do MP, verifique que o evento de `subscription` (preapproval) foi disparado para `https://barbeariasilva.onrender.com/webhooks/mercado-pago`.
+4. No painel do MP, verifique que o evento de `subscription` (preapproval) foi disparado para `https://lfbarber.onrender.com/webhooks/mercado-pago`.
 5. Verifique o banco de dados:
    - `assinaturas_usuarios` — entrada criada e `status = 'ativa'`
    - `assinaturas_pagamentos_recorrentes` — `mercado_pago_subscription_id` preenchido
@@ -34,7 +34,7 @@
 - Simular webhook (exemplo simplificado):
 
 ```bash
-curl -X POST https://barbeariasilva.onrender.com/webhooks/mercado-pago \
+curl -X POST https://lfbarber.onrender.com/webhooks/mercado-pago \
   -H "Content-Type: application/json" \
   -H "x-signature: <assinatura gerada>" \
   -d '{"type":"subscription","data":{"id":"PREAPPROVAL_ID"}}'
@@ -55,7 +55,7 @@ curl -X POST https://barbeariasilva.onrender.com/webhooks/mercado-pago \
    - `MERCADO_PAGO_ACCESS_TOKEN` = token de produção
    - `MERCADO_PAGO_PUBLIC_KEY` = public key de produção
    - `WEBHOOK_SECRET` = secret seguro (e atualizado no painel de webhooks do MP)
-3. Atualize a URL do webhook no painel do Mercado Pago para apontar para `https://barbeariasilva.onrender.com/webhooks/mercado-pago` e confirme que o webhook está ativo.
+3. Atualize a URL do webhook no painel do Mercado Pago para apontar para `https://lfbarber.onrender.com/webhooks/mercado-pago` e confirme que o webhook está ativo.
 4. Realize um teste com um cliente real (ou use sua conta): acesse o site, escolha um plano e conclua o checkout no Mercado Pago com cartão real.
 5. Verifique:
    - O retorno do Mercado Pago (página de sucesso/erro e redirecionamento ao `back_url`);
