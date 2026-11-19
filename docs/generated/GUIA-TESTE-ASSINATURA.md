@@ -38,7 +38,7 @@
 
 ### Teste 1: Fluxo Básico de Assinatura
 
-1. Abra: https://barbeariasilva.vercel.app/assinatura.html
+1. Abra: https://lf-barber.vercel.app/assinatura.html
 2. Selecione um plano (ex: Bronze - R$ 29,90)
 3. Clique em "Contratar Agora"
 4. Será redirecionado para checkout do MP
@@ -110,7 +110,7 @@ LIMIT 1;
 ### Teste 4: Verificar Frontend - Minhas Assinaturas
 
 1. Faça login com o usuário que criou assinatura
-2. Vá para: https://barbeariasilva.vercel.app/minha-assinatura.html
+2. Vá para: https://lf-barber.vercel.app/minha-assinatura.html
 3. Clique em "Minhas Assinaturas"
 
 **Esperado:**
@@ -234,7 +234,7 @@ WEBHOOK_HMAC_ENABLED=false
 1. [ ] WEBHOOK_HMAC_ENABLED pode permanecer `false` (ou ativar após configurar secret corretamente)
 2. [ ] MERCADO_PAGO_ACCESS_TOKEN é da produção (APP_USR-)
 3. [ ] BACKEND_URL aponta para https://lfbarber.onrender.com
-4. [ ] FRONTEND_URL aponta para https://barbeariasilva.vercel.app
+4. [ ] FRONTEND_URL aponta para https://lf-barber.vercel.app
 5. [ ] Webhook URL no MP dashboard é a produção
 6. [ ] SSL/HTTPS ativado em ambas URLs
 7. [ ] Logs estão sendo monitorados
@@ -245,9 +245,9 @@ WEBHOOK_HMAC_ENABLED=false
 
 | Item               | URL                                                     |
 | ------------------ | ------------------------------------------------------- |
-| Frontend           | https://barbeariasilva.vercel.app                       |
-| Assinatura         | https://barbeariasilva.vercel.app/assinatura.html       |
-| Minhas Assinaturas | https://barbeariasilva.vercel.app/minha-assinatura.html |
+| Frontend           | https://lf-barber.vercel.app                       |
+| Assinatura         | https://lf-barber.vercel.app/assinatura.html       |
+| Minhas Assinaturas | https://lf-barber.vercel.app/minha-assinatura.html |
 | Backend            | https://lfbarber.onrender.com                     |
 | MP Dashboard       | https://www.mercadopago.com.br/developers/panel         |
 | Render Logs        | https://dashboard.render.com                            |

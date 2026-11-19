@@ -4,7 +4,7 @@
    - MERCADO*PAGO_ACCESS_TOKEN=APP_USR*... (produção)
    - MERCADO*PAGO_PUBLIC_KEY=pk*...
    - WEBHOOK_SECRET=uma_chave_segura_e_aleatoria
-   - FRONTEND_URL=https://barbeariasilva.vercel.app
+   - FRONTEND_URL=https://lf-barber.vercel.app
    - BACKEND_URL=https://lfbarber.onrender.com
 
 2. Endpoints do Mercado Pago

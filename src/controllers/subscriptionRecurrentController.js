@@ -218,7 +218,7 @@ class SubscriptionRecurrentController {
 
             // Criar preapproval no Mercado Pago usando wrapper
             const mp = require('../config/mercadoPago');
-            const backUrl = (process.env.FRONTEND_URL || 'https://barbeariasilva.vercel.app') + '/minha-assinatura.html?subscription_result=success';
+            const backUrl = (process.env.FRONTEND_URL || 'https://lf-barber.vercel.app') + '/minha-assinatura.html?subscription_result=success';
 
             const pre = await mp.createPreapproval({
                 reason: plano.nome_plano || `Assinatura #${plano.id}`,

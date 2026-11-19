@@ -440,11 +440,11 @@ class AdminAgendamentoService {
             if (diaSemana === 0) {
                 return []; // domingo fechado
             } else if (diaSemana === 6) { // sábado
-                inicioMin = 8 * 60 + 30; // 8:30
-                fimMin   = 18 * 60 + 30; // 18:30
+                inicioMin = 8 * 60; // 8:00
+                fimMin   = 20 * 60; // 20:00
             } else { // segunda a sexta
-                inicioMin = 8 * 60 + 30; // 8:30
-                fimMin   = 19 * 60;      // 19:00
+                inicioMin = 9 * 60; // 9:00
+                fimMin   = 20 * 60;      // 20:00
             }
 
             // 2. Gerar slots de 30 em 30 minutos

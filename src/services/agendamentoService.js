@@ -784,11 +784,11 @@ class AgendamentoService {
         if (diaSemana === 0) { // Domingo
             return [];
         } else if (diaSemana === 6) { // Sábado
-            inicioMin = 8 * 60 + 30; // 8:30
-            fimMin   = 18 * 60 + 30; // 18:30
+            inicioMin = 8 * 60; // 8:00
+            fimMin   = 20 * 60; // 20:00
         } else { // Segunda a Sexta
-            inicioMin = 8 * 60 + 30; // 8:30
-            fimMin   = 19 * 60;      // 19:00
+            inicioMin = 9 * 60; // 9:00
+            fimMin   = 20 * 60;      // 20:00
         }
         
         const intervalo = 30; // minutos

@@ -1,4 +1,4 @@
-# Documentação Mercado Pago - Barbearia Silva
+# Documentação Mercado Pago - VM Barbearia
 
 Este diretório contém guias práticos para configurar e testar a integração com **Mercado Pago** (webhooks, fluxos de assinatura, rotas e testes).
 
