@@ -3,6 +3,10 @@ const pool = require('../config/database');
 const assinaturaService = require('./assinaturaService');
 const subscriptionService = require('./subscriptionRecurrentService');
 const servicoService = require('./servicoService');
+const {
+    gerarSlotsPadrao,
+    validarIntervaloAgendamento
+} = require('../utils/horarioFuncionamento');
 
 class AgendamentoService {
     // Criar novo agendamento COM MÚLTIPLOS SERVIÇOS
@@ -36,6 +40,8 @@ class AgendamentoService {
             if (!disponivel) {
                 throw new Error('Horário indisponível para agendamento');
             }
+
+            validarIntervaloAgendamento(data_agendada, hora_inicio, hora_fim);
             
             // 3. Calcular duração total para validação
             const servicosInfo = await Promise.all(
@@ -115,17 +121,8 @@ class AgendamentoService {
             if (!disponivel) {
                 throw new Error('Horário indisponível para agendamento');
             }
-            
-            // Calcular duração total (opcional, apenas para validação)
-            const servicosInfo = await Promise.all(
-                servicos_ids.map(async (id) => {
-                    const result = await client.query(
-                        'SELECT duracao_servico FROM servicos WHERE id = $1',
-                        [id]
-                    );
-                    return result.rows[0];
-                })
-            );
+
+            validarIntervaloAgendamento(data_agendada, hora_inicio, hora_fim);
             
             // Inserir agendamento
             const primeiroServico = servicos_ids[0] || null;
@@ -516,8 +513,8 @@ class AgendamentoService {
                 return { horarios: [], precoEstimado: 0, precoComDesconto: 0 };
             }
             
-            // 2. Obter horários padrão da barbearia para este dia
-            const horariosPadrao = this.gerarHorariosPadrao(data);
+            // 2. Obter horários padrão da barbearia para este dia (respeita duração do serviço)
+            const horariosPadrao = this.gerarHorariosPadrao(data, duracaoMinutos);
             
             // 3. Obter intervalos ocupados por agendamentos (agora retorna objetos com inicio e fim)
             const intervalosOcupados = await this.getIntervalosOcupados(barbeiro_id, data);
@@ -615,8 +612,8 @@ class AgendamentoService {
         try {
             console.log(`[getHorariosDisponiveisSemPreferencia] Buscando horários gerais para data: ${data}, duração: ${duracaoMinutos}min`);
             
-            // 1. Obter horários padrão da barbearia para este dia
-            const horariosPadrao = this.gerarHorariosPadrao(data);
+            // 1. Obter horários padrão da barbearia para este dia (respeita duração)
+            const horariosPadrao = this.gerarHorariosPadrao(data, duracaoMinutos);
             
             if (!horariosPadrao || horariosPadrao.length === 0) {
                 console.log('Nenhum horário padrão para este dia (provavelmente domingo)');
@@ -773,34 +770,9 @@ class AgendamentoService {
         }
     }
     
-    // Método para gerar horários padrão
-    gerarHorariosPadrao(dataStr) {
-        const data = new Date(dataStr);
-        const diaSemana = data.getDay(); // 0 = domingo, 1 = segunda, etc.
-        
-        // Horários em minutos desde meia-noite
-        let inicioMin, fimMin;
-        
-        if (diaSemana === 0) { // Domingo
-            return [];
-        } else if (diaSemana === 6) { // Sábado
-            inicioMin = 8 * 60; // 8:00
-            fimMin   = 20 * 60; // 20:00
-        } else { // Segunda a Sexta
-            inicioMin = 9 * 60; // 9:00
-            fimMin   = 20 * 60;      // 20:00
-        }
-        
-        const intervalo = 30; // minutos
-        const horarios = [];
-        
-        for (let minutos = inicioMin; minutos + intervalo <= fimMin; minutos += intervalo) {
-            const hora = Math.floor(minutos / 60);
-            const minuto = minutos % 60;
-            horarios.push(`${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`);
-        }
-        
-        return horarios;
+    // Método para gerar horários padrão (duração mínima 30 min para slot base)
+    gerarHorariosPadrao(dataStr, duracaoMinutos = 30) {
+        return gerarSlotsPadrao(dataStr, duracaoMinutos);
     }
     
     // NOVO: Método para obter intervalos ocupados (retorna array de objetos {inicio, fim})
@@ -1030,6 +1002,8 @@ class AgendamentoService {
             if (!disponivel) {
                 throw new Error('Horário indisponível para o novo agendamento');
             }
+
+            validarIntervaloAgendamento(data_agendada, hora_inicio, hora_fim);
 
             // Atualizar agendamento
             const primeiroServico = servicos_ids[0] || null;

@@ -6,6 +6,11 @@ const Barber = require('../../models/Barber');
 const Block = require('../../models/Block');
 const agendamentoService = require('../agendamentoService');
 const pool = require('../../config/database');
+const {
+    parseDataISOLocal,
+    adicionarMinutosAoHorario,
+    validarIntervaloAgendamento
+} = require('../../utils/horarioFuncionamento');
 
 class AdminAgendamentoService {
     // NO services/admin/agendamentoService.js - MÉTODO getAllAgendamentos ATUALIZADO
@@ -154,9 +159,29 @@ class AdminAgendamentoService {
         }
     }
 
+    async calcularHoraFimPorServicos(horaInicio, servicosIds) {
+        if (!horaInicio || !servicosIds?.length) return null;
+        let duracaoTotal = 0;
+        for (const servicoId of servicosIds) {
+            const servico = await Service.findById(servicoId);
+            duracaoTotal += parseInt(servico?.duracao_servico, 10) || 30;
+        }
+        return adicionarMinutosAoHorario(horaInicio, duracaoTotal);
+    }
+
     // MÉTODO ORIGINAL (mantido para compatibilidade)
     async createAgendamento(agendamentoData) {
         try {
+            if (agendamentoData.servicos_ids?.length) {
+                if (!agendamentoData.hora_fim) {
+                    agendamentoData.hora_fim = await this.calcularHoraFimPorServicos(
+                        agendamentoData.hora_inicio,
+                        agendamentoData.servicos_ids
+                    );
+                }
+                return this.createAgendamentoComServicos(agendamentoData);
+            }
+
             // Validar dados
             await this.validarAgendamento(agendamentoData);
             
@@ -215,6 +240,8 @@ class AdminAgendamentoService {
                 if (!disponivel) {
                     throw new Error('Horário indisponível para agendamento');
                 }
+
+                validarIntervaloAgendamento(data, horaInicio, horaFim);
             }
             
             // Atualizar agendamento com serviços
@@ -253,6 +280,8 @@ class AdminAgendamentoService {
                 if (!disponivel) {
                     throw new Error('Horário indisponível para agendamento');
                 }
+
+                validarIntervaloAgendamento(data, horaInicio, horaFim);
             }
             
             // Atualizar agendamento
@@ -336,7 +365,7 @@ class AdminAgendamentoService {
 
     // NOVO: Validação para múltiplos serviços
     async validarAgendamentoComServicos(agendamentoData) {
-        const { usuario_id, barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim } = agendamentoData;
+        let { usuario_id, barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim } = agendamentoData;
         
         // Validar usuário
         const usuario = await User.findById(usuario_id);
@@ -365,22 +394,20 @@ class AdminAgendamentoService {
         }
         
         // Validar data e hora
-        const dataAgendamento = new Date(data_agendada);
+        const dataAgendamento = parseDataISOLocal(data_agendada);
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
         if (dataAgendamento < hoje) {
             throw new Error('Não é possível agendar para datas passadas');
         }
-        
-        // Validar horário de funcionamento
-        const horaInicioNum = parseInt(hora_inicio.split(':')[0]);
-        const minutoInicioNum = parseInt(hora_inicio.split(':')[1]);
-        
-        if (horaInicioNum < 8 || horaInicioNum > 19 || 
-            (horaInicioNum === 19 && minutoInicioNum > 0)) {
-            throw new Error('Horário fora do funcionamento da barbearia (8:00 - 19:00)');
+
+        if (!hora_fim) {
+            hora_fim = await this.calcularHoraFimPorServicos(hora_inicio, servicos_ids);
+            agendamentoData.hora_fim = hora_fim;
         }
+
+        validarIntervaloAgendamento(data_agendada, hora_inicio, hora_fim);
         
         return true;
     }
@@ -410,78 +437,51 @@ class AdminAgendamentoService {
         }
         
         // Validar data e hora
-        const dataAgendamento = new Date(data_agendada);
+        const dataAgendamento = parseDataISOLocal(data_agendada);
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         
         if (dataAgendamento < hoje) {
             throw new Error('Não é possível agendar para datas passadas');
         }
-        
-        // Validar horário de funcionamento
-        const horaInicioNum = parseInt(hora_inicio.split(':')[0]);
-        const minutoInicioNum = parseInt(hora_inicio.split(':')[1]);
-        
-        if (horaInicioNum < 8 || horaInicioNum > 19 || 
-            (horaInicioNum === 19 && minutoInicioNum > 0)) {
-            throw new Error('Horário fora do funcionamento da barbearia (8:00 - 19:00)');
+
+        let fimValidacao = hora_fim;
+        if (!fimValidacao && servico) {
+            const duracao = parseInt(servico.duracao_servico, 10) || 30;
+            fimValidacao = adicionarMinutosAoHorario(hora_inicio, duracao);
         }
+        if (!fimValidacao) {
+            throw new Error('Horário de término é obrigatório');
+        }
+
+        validarIntervaloAgendamento(data_agendada, hora_inicio, fimValidacao);
         
         return true;
     }
 
-    async getHorariosDisponiveis(barbeiro_id, data) {
+    async getHorariosDisponiveis(barbeiro_id, data, servicosIds = []) {
         try {
-            // 1. Obter limites de funcionamento para a data
-            const dataObj = new Date(data);
-            const diaSemana = dataObj.getDay(); // 0=domingo, 1=segunda...
-            
-            let inicioMin, fimMin;
-            if (diaSemana === 0) {
-                return []; // domingo fechado
-            } else if (diaSemana === 6) { // sábado
-                inicioMin = 8 * 60; // 8:00
-                fimMin   = 20 * 60; // 20:00
-            } else { // segunda a sexta
-                inicioMin = 9 * 60; // 9:00
-                fimMin   = 20 * 60;      // 20:00
+            const ids = (servicosIds || [])
+                .map((id) => parseInt(id, 10))
+                .filter((id) => Number.isFinite(id));
+
+            let duracaoMinutos = 30;
+            if (ids.length > 0) {
+                const servicos = await Promise.all(ids.map((id) => Service.findById(id)));
+                duracaoMinutos = servicos.reduce(
+                    (acc, s) => acc + (parseInt(s?.duracao_servico, 10) || 30),
+                    0
+                );
             }
 
-            // 2. Gerar slots de 30 em 30 minutos
-            const intervalo = 30; // minutos
-            const todosSlots = [];
-            for (let minutos = inicioMin; minutos + intervalo <= fimMin; minutos += intervalo) {
-                const hora = Math.floor(minutos / 60);
-                const min = minutos % 60;
-                todosSlots.push(`${hora.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
-            }
+            const resultado = await agendamentoService.getHorariosDisponiveis(
+                barbeiro_id,
+                data,
+                ids,
+                duracaoMinutos
+            );
 
-            // 3. Buscar horários ocupados (agendamentos + bloqueios)
-            const [horariosOcupados, bloqueios] = await Promise.all([
-                Appointment.getUnavailableHours(barbeiro_id, data),
-                Block.findAll({ id_barbeiro: barbeiro_id, data: data })
-            ]);
-
-            // 4. Filtrar slots disponíveis
-            const horariosDisponiveis = todosSlots.filter(slot => {
-                // Verificar se não está em agendamento
-                if (horariosOcupados.includes(slot)) return false;
-
-                // Verificar bloqueios
-                const slotMinutos = this._converterParaMinutos(slot);
-                const estaBloqueado = bloqueios.some(bloqueio => {
-                    if (bloqueio.tipo === 'dia') return true;
-
-                    const inicioBloqueio = this._converterParaMinutos(bloqueio.hora_inicio || '00:00');
-                    const fimBloqueio   = this._converterParaMinutos(bloqueio.hora_fim || '23:59');
-                    // Verifica sobreposição considerando duração padrão (ex: 30 min)
-                    return (slotMinutos < fimBloqueio && slotMinutos + intervalo > inicioBloqueio);
-                });
-
-                return !estaBloqueado;
-            });
-
-            return horariosDisponiveis;
+            return resultado.horarios || [];
         } catch (error) {
             console.error('Erro ao buscar horários disponíveis (admin):', error);
             throw error;

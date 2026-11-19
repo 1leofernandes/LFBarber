@@ -184,7 +184,13 @@ class AdminAgendamentoController {
             // Determinar quais serviços usar para calcular duração
             let servicosParaConsulta = [];
             if (servicos_ids) {
-                servicosParaConsulta = Array.isArray(servicos_ids) ? servicos_ids : [servicos_ids];
+                if (Array.isArray(servicos_ids)) {
+                    servicosParaConsulta = servicos_ids;
+                } else if (String(servicos_ids).includes(',')) {
+                    servicosParaConsulta = String(servicos_ids).split(',').map((id) => id.trim());
+                } else {
+                    servicosParaConsulta = [servicos_ids];
+                }
             } else if (servico_id) {
                 servicosParaConsulta = [servico_id];
             }

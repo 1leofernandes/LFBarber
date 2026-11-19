@@ -23,6 +23,7 @@
     <!-- Toastify -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="assets/js/horario-funcionamento.js"></script>
 
     <style>
         :root {
@@ -3280,14 +3281,17 @@
 
             const scopeLabel = escopo === 'hoje' ? 'de hoje' : 'futuros';
 
-            // Gera lista de horários das 08:00 às 19:00 (intervalo de 30 min)
-            const horarios = [];
-            for (let h = 8; h <= 19; h++) {
-                for (let m = 0; m < 60; m += 30) {
-                    if (h === 19 && m === 30) continue; // não incluir 19:30
-                    horarios.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-                }
-            }
+            const horarios = (window.HorarioFuncionamento && HorarioFuncionamento.gerarSlotsGradeCompleta)
+                ? HorarioFuncionamento.gerarSlotsGradeCompleta()
+                : (() => {
+                    const slots = [];
+                    for (let min = 8 * 60; min + 30 <= 20 * 60; min += 30) {
+                        const h = Math.floor(min / 60);
+                        const m = min % 60;
+                        slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+                    }
+                    return slots;
+                })();
 
             container.innerHTML = `
                 <div class="agendamentos-por-barbeiro">
@@ -3503,14 +3507,23 @@
             try {
                 timeSlots.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Carregando horários...</div>';
                 
+                const servicosSelecionados = Array.from(
+                    document.querySelectorAll('#servicos-container input[type="checkbox"]:checked')
+                ).map(cb => cb.value);
+
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/admin/agendamentos/horarios-disponiveis?barbeiro_id=${barbeiroSelect.value}&data=${dataInput.value}`, {
+                let url = `${API_BASE_URL}/admin/agendamentos/horarios-disponiveis?barbeiro_id=${barbeiroSelect.value}&data=${dataInput.value}`;
+                if (servicosSelecionados.length > 0) {
+                    url += `&servicos_ids=${servicosSelecionados.join(',')}`;
+                }
+
+                const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (response.ok) {
                     const result = await response.json();
-                    const horarios = result.data || [];
+                    const horarios = (result.data || []).slice().sort();
                     
                     if (horarios.length === 0) {
                         timeSlots.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #dc3545;">Nenhum horário disponível para esta data</div>';
@@ -3519,46 +3532,22 @@
                     
                     timeSlots.innerHTML = '';
                     
-                    // Gerar horários de 30 em 30 minutos das 9h às 19h
-                    const horariosPadrao = [];
-                    for (let hora = 9; hora <= 19; hora++) {
-                        for (let minuto = 0; minuto < 60; minuto += 30) {
-                            if (hora === 19 && minuto > 0) break; // Até 19:00
-                            const horaStr = hora.toString().padStart(2, '0');
-                            const minutoStr = minuto.toString().padStart(2, '0');
-                            horariosPadrao.push(`${horaStr}:${minutoStr}`);
-                        }
-                    }
-                    
-                    // Filtrar horários disponíveis
-                    horariosPadrao.forEach(horario => {
+                    horarios.forEach(horario => {
                         const timeButton = document.createElement('button');
                         timeButton.type = 'button';
                         timeButton.className = 'time-button';
                         timeButton.textContent = horario;
                         timeButton.dataset.time = horario;
-                        
-                        // Verificar se o horário está disponível
-                        const disponivel = horarios.includes(horario);
-                        timeButton.disabled = !disponivel;
-                        
-                        if (!disponivel) {
-                            timeButton.title = 'Horário indisponível';
-                            timeButton.style.opacity = '0.5';
-                            timeButton.style.cursor = 'not-allowed';
-                        } else {
-                            timeButton.addEventListener('click', function() {
-                                document.querySelectorAll('.time-button').forEach(btn => {
-                                    btn.classList.remove('active');
-                                    btn.style.background = '';
-                                });
-                                this.classList.add('active');
-                                this.style.background = 'var(--primary-color)';
-                                this.style.color = 'white';
-                                document.getElementById('agendamento-hora').value = this.dataset.time;
+                        timeButton.addEventListener('click', function() {
+                            document.querySelectorAll('.time-button').forEach(btn => {
+                                btn.classList.remove('active');
+                                btn.style.background = '';
                             });
-                        }
-                        
+                            this.classList.add('active');
+                            this.style.background = 'var(--primary-color)';
+                            this.style.color = 'white';
+                            document.getElementById('agendamento-hora').value = this.dataset.time;
+                        });
                         timeSlots.appendChild(timeButton);
                     });
                 } else {
@@ -3598,6 +3587,11 @@
             
             if (servicosSelecionados.length === 0) {
                 resumoDiv.style.display = 'none';
+                const dataInputVazio = document.getElementById('agendamento-data');
+                const barbeiroSelectVazio = document.getElementById('barbeiro-select');
+                if (dataInputVazio?.value && barbeiroSelectVazio?.value) {
+                    carregarHorariosDisponiveis();
+                }
                 return;
             }
             
@@ -3613,6 +3607,12 @@
             resumoValor.textContent = `Valor total: R$ ${valorTotal.toFixed(2)}`;
             resumoDuracao.textContent = `Duração total: ${duracaoTotal} minutos`;
             resumoDiv.style.display = 'block';
+
+            const dataInput = document.getElementById('agendamento-data');
+            const barbeiroSelect = document.getElementById('barbeiro-select');
+            if (dataInput?.value && barbeiroSelect?.value) {
+                carregarHorariosDisponiveis();
+            }
         }
         
         function renderMockAgendamentos() {
@@ -4877,7 +4877,7 @@
                         </div>
                         <div class="admin-card-content">
                             <p style="margin-bottom: 0.5rem;"><strong>Segunda a Sexta:</strong> 09:00 - 20:00</p>
-                            <p style="margin-bottom: 0.5rem;"><strong>Sábado:</strong> 09:00 - 20:00</p>
+                            <p style="margin-bottom: 0.5rem;"><strong>Sábado:</strong> 08:00 - 20:00</p>
                             <p><strong>Domingo:</strong> Fechado</p>
                         </div>
                     </div>
